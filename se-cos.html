@@ -1,0 +1,2570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SE-COS — Software Engineering Career Operating System</title>
+<script>
+  // Theme flash prevention — runs before paint
+  (function() {
+    var saved = localStorage.getItem('se-cos-theme') || 'system';
+    var resolved = saved === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : saved;
+    document.documentElement.setAttribute('data-theme', resolved);
+  })();
+</script>
+<style>
+/* ============================================================
+   SE-COS — styles.css
+   Design tokens, theme system, layout, component styles
+   ============================================================ */
+
+:root {
+  /* ---- Color tokens (Light) ---- */
+  --bg: #F7F8FA;
+  --bg-elevated: #FFFFFF;
+  --bg-sunken: #EEF0F3;
+  --border: #DDE1E7;
+  --border-strong: #C5CBD4;
+  --text-primary: #15181E;
+  --text-secondary: #5B6270;
+  --text-tertiary: #8B92A0;
+
+  --accent: #5B8DEF;          /* focus blue */
+  --accent-soft: #5B8DEF1A;
+  --success: #0E9F87;         /* teal */
+  --success-soft: #0E9F871A;
+  --warning: #D98C0E;         /* amber */
+  --warning-soft: #D98C0E1A;
+  --danger: #E0473F;          /* red */
+  --danger-soft: #E0473F1A;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'SF Mono', 'JetBrains Mono', Consolas, 'Courier New', monospace;
+
+  --shadow-sm: 0 1px 2px rgba(20,22,28,0.06);
+  --shadow-md: 0 4px 16px rgba(20,22,28,0.08);
+}
+
+[data-theme="dark"] {
+  --bg: #0B0E14;
+  --bg-elevated: #11151D;
+  --bg-sunken: #080A0F;
+  --border: #232834;
+  --border-strong: #313847;
+  --text-primary: #EDEFF3;
+  --text-secondary: #9BA2B0;
+  --text-tertiary: #6B7280;
+
+  --accent: #6C9BFA;
+  --accent-soft: #6C9BFA22;
+  --success: #2DD4BF;
+  --success-soft: #2DD4BF22;
+  --warning: #F5A623;
+  --warning-soft: #F5A62322;
+  --danger: #F2655C;
+  --danger-soft: #F2655C22;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  transition: background 200ms ease, color 200ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute; left: -9999px; top: 0;
+  background: var(--accent); color: #fff;
+  padding: 10px 16px; border-radius: var(--radius-sm); z-index: 1000;
+}
+.skip-link:focus { left: 16px; top: 16px; }
+
+/* ---------- App Shell ---------- */
+.app-shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: var(--bg-elevated);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sidebar-logo {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 8px 20px;
+  font-weight: 600; font-size: 15px;
+}
+.sidebar-logo .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+.nav-list { list-style: none; padding: 0; margin: 0; flex: 1; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: var(--radius-sm);
+  color: var(--text-secondary); font-size: 13.5px; font-weight: 500;
+  cursor: pointer; margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--bg-sunken); color: var(--text-primary); }
+.nav-item.active { background: var(--accent-soft); color: var(--accent); }
+.nav-item .nav-badge {
+  margin-left: auto; background: var(--warning-soft); color: var(--warning);
+  font-size: 10.5px; font-weight: 600; padding: 1px 6px; border-radius: 8px;
+}
+
+.sidebar-footer { border-top: 1px solid var(--border); padding-top: 10px; display: flex; gap: 6px; }
+.icon-btn {
+  background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+}
+.icon-btn:hover { background: var(--bg-sunken); color: var(--text-primary); }
+
+.main-content { padding: 24px 32px 80px; max-width: 1100px; }
+
+/* ---------- Bottom Tab Bar (Mobile) ---------- */
+.bottom-tabs {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--bg-elevated); border-top: 1px solid var(--border);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  z-index: 100;
+}
+.bottom-tabs-row { display: flex; justify-content: space-around; }
+.bottom-tab {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  color: var(--text-tertiary); font-size: 10px; min-width: 44px; min-height: 44px;
+  justify-content: center; border-radius: var(--radius-sm); position: relative;
+}
+.bottom-tab.active { color: var(--accent); }
+.bottom-tab .tab-badge {
+  position: absolute; top: 2px; right: 10px;
+  width: 7px; height: 7px; border-radius: 50%; background: var(--warning);
+}
+
+/* ---------- Cards ---------- */
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+}
+.card-title { font-size: 14px; font-weight: 600; margin: 0 0 10px; }
+
+.grid { display: grid; gap: 14px; }
+.grid-2 { grid-template-columns: 1fr 1fr; }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border); background: var(--bg-elevated);
+  color: var(--text-primary); border-radius: var(--radius-sm);
+  padding: 8px 14px; font-size: 13px; font-weight: 500;
+}
+.btn:hover { background: var(--bg-sunken); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* ---------- Badges / Pills ---------- */
+.badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+.badge-accent { background: var(--accent-soft); color: var(--accent); }
+.badge-success { background: var(--success-soft); color: var(--success); }
+.badge-warning { background: var(--warning-soft); color: var(--warning); }
+.badge-danger { background: var(--danger-soft); color: var(--danger); }
+.badge-muted { background: var(--bg-sunken); color: var(--text-secondary); }
+
+/* ---------- Toast ---------- */
+#toast-container {
+  position: fixed; bottom: 20px; right: 20px; z-index: 1000;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.toast {
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  box-shadow: var(--shadow-md); border-radius: var(--radius-sm);
+  padding: 10px 16px; font-size: 13px; opacity: 0; transform: translateY(8px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+.toast-visible { opacity: 1; transform: translateY(0); }
+.toast-success { border-left: 3px solid var(--success); }
+.toast-error { border-left: 3px solid var(--danger); }
+
+/* ---------- Command Palette ---------- */
+.palette-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  z-index: 500; align-items: flex-start; justify-content: center; padding-top: 12vh;
+}
+.palette-overlay.open { display: flex; }
+.palette-box {
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); width: 90%; max-width: 560px;
+  box-shadow: var(--shadow-md); overflow: hidden;
+}
+.palette-input {
+  width: 100%; border: none; border-bottom: 1px solid var(--border);
+  padding: 14px 16px; font-size: 15px; border-radius: 0;
+}
+.palette-input:focus { outline: none; }
+.palette-results { max-height: 320px; overflow-y: auto; }
+.palette-item {
+  padding: 10px 16px; cursor: pointer; font-size: 13.5px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.palette-item:hover, .palette-item.selected { background: var(--bg-sunken); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 880px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .bottom-tabs { display: block; }
+  .main-content { padding: 16px 16px 90px; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+
+<div id="onboarding-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:900; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--bg-elevated); border-radius:var(--radius-lg); padding:28px; max-width:480px; width:100%; box-shadow:var(--shadow-md);">
+    <h2 style="margin:0 0 6px; font-size:19px;">Welcome to SE-COS</h2>
+    <p style="color:var(--text-secondary); font-size:13px; margin:0 0 18px;">Set up your prep profile to get a personalized roadmap.</p>
+
+    <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Current level</label>
+    <select id="ob-level" style="width:100%; margin-bottom:14px;">
+      <option value="SDE1">SDE-1</option>
+      <option value="SDE2" selected>SDE-2</option>
+      <option value="SDE3">SDE-3</option>
+      <option value="Staff">Staff</option>
+    </select>
+
+    <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Target interview date</label>
+    <input type="date" id="ob-date" style="width:100%; margin-bottom:14px;">
+
+    <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:6px;">Target companies</label>
+    <div id="ob-companies" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:20px;"></div>
+
+    <button id="ob-submit" class="btn btn-primary" style="width:100%;">Generate my roadmap</button>
+  </div>
+</div>
+
+<div class="app-shell">
+  <nav class="sidebar" aria-label="Main navigation">
+    <div class="sidebar-logo"><span class="dot"></span> SE-COS</div>
+    <ul class="nav-list">
+      <li class="nav-item" data-nav="dashboard" role="link" tabindex="0">Dashboard</li>
+      <li class="nav-item" data-nav="problems" role="link" tabindex="0">Problems <span class="nav-badge" id="sidebar-sr-badge" style="display:none"></span></li>
+      <li class="nav-item" data-nav="resources" role="link" tabindex="0">Resources</li>
+      <li class="nav-item" data-nav="companies" role="link" tabindex="0">Companies</li>
+      <li class="nav-item" data-nav="system-design" role="link" tabindex="0">System Design</li>
+      <li class="nav-item" data-nav="behavioral" role="link" tabindex="0">Behavioral</li>
+      <li class="nav-item" data-nav="roadmap" role="link" tabindex="0">Roadmap</li>
+      <li class="nav-item" data-nav="analytics" role="link" tabindex="0">Analytics</li>
+      <li class="nav-item" data-nav="mock" role="link" tabindex="0">Mock Interview</li>
+      <li class="nav-item" data-nav="settings" role="link" tabindex="0">Settings</li>
+    </ul>
+    <div class="sidebar-footer">
+      <button class="icon-btn" id="open-palette-btn" title="Search (⌘K)" aria-label="Open command palette">⌘K</button>
+      <button class="icon-btn" id="theme-toggle-btn" title="Toggle theme" aria-label="Toggle theme">◐</button>
+    </div>
+  </nav>
+
+  <main id="main-content" class="main-content">
+    <div id="view-root"></div>
+  </main>
+</div>
+
+<nav class="bottom-tabs" aria-label="Mobile navigation">
+  <div class="bottom-tabs-row">
+    <div class="bottom-tab" data-nav="dashboard" role="link" tabindex="0" aria-label="Dashboard">🏠<span>Home</span></div>
+    <div class="bottom-tab" data-nav="problems" role="link" tabindex="0" aria-label="Problems">📋<span>Problems</span></div>
+    <div class="bottom-tab" data-nav="companies" role="link" tabindex="0" aria-label="Companies">🏢<span>Companies</span></div>
+    <div class="bottom-tab" data-nav="analytics" role="link" tabindex="0" aria-label="Analytics">📊<span>Stats</span></div>
+    <div class="bottom-tab" data-nav="settings" role="link" tabindex="0" aria-label="More options">⚙️<span>More</span></div>
+  </div>
+</nav>
+
+<div id="palette-overlay" class="palette-overlay">
+  <div class="palette-box">
+    <input id="palette-input" class="palette-input" type="text" placeholder="Search problems, resources, companies..."
+      oninput="CommandPalette.onInput(this.value)"
+      onkeydown="if(event.key==='ArrowDown'){event.preventDefault();CommandPalette.moveSelection(1)} else if(event.key==='ArrowUp'){event.preventDefault();CommandPalette.moveSelection(-1)} else if(event.key==='Enter'){CommandPalette.selectCurrent()}">
+    <div id="palette-results" class="palette-results"></div>
+  </div>
+</div>
+
+<div id="toast-container" aria-live="polite"></div>
+
+<script>
+/* ===== lz-string.min.js ===== */
+/* ============================================================
+   SE-COS — lz-string.min.js
+   Minimal, correct LZ-String-compatible compressor.
+   Implements compress()/decompress() using LZ78-style dictionary
+   coding over 16-bit codepoints, matching lz-string's on-disk
+   format so output stays compact and round-trips reliably.
+   ============================================================ */
+var LZString = (function () {
+  function compress(uncompressed) {
+    if (uncompressed == null) return '';
+    var i, value,
+      dictionary = {},
+      dictionaryToCreate = {},
+      c = '',
+      wc = '',
+      w = '',
+      enlargeIn = 2,
+      dictSize = 3,
+      numBits = 2,
+      result = [],
+      data_val = 0,
+      data_position = 0;
+
+    function writeBits(numBitsToWrite, val) {
+      for (var b = 0; b < numBitsToWrite; b++) {
+        data_val = (data_val << 1) | (val & 1);
+        val = val >> 1;
+        if (data_position == 15) { data_position = 0; result.push(String.fromCharCode(data_val)); data_val = 0; }
+        else data_position++;
+      }
+    }
+
+    for (i = 0; i < uncompressed.length; i += 1) {
+      c = uncompressed.charAt(i);
+      if (!Object.prototype.hasOwnProperty.call(dictionary, c)) {
+        dictionary[c] = dictSize++;
+        dictionaryToCreate[c] = true;
+      }
+      wc = w + c;
+      if (Object.prototype.hasOwnProperty.call(dictionary, wc)) {
+        w = wc;
+      } else {
+        emit(w);
+        dictionary[wc] = dictSize++;
+        w = String(c);
+      }
+    }
+
+    function emit(w) {
+      if (Object.prototype.hasOwnProperty.call(dictionaryToCreate, w)) {
+        if (w.charCodeAt(0) < 256) {
+          writeBits(numBits, 0);
+          writeBits(8, w.charCodeAt(0));
+        } else {
+          writeBits(numBits, 1);
+          writeBits(16, w.charCodeAt(0));
+        }
+        enlargeIn--;
+        if (enlargeIn == 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
+        delete dictionaryToCreate[w];
+      } else {
+        writeBits(numBits, dictionary[w]);
+      }
+      enlargeIn--;
+      if (enlargeIn == 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
+    }
+
+    if (w !== '') emit(w);
+
+    // End-of-stream marker
+    writeBits(numBits, 2);
+
+    // Flush remaining bits
+    while (true) {
+      data_val = (data_val << 1);
+      if (data_position == 15) { result.push(String.fromCharCode(data_val)); break; }
+      else data_position++;
+    }
+    return result.join('');
+  }
+
+  function decompress(compressed) {
+    if (compressed == null) return '';
+    if (compressed === '') return null;
+    var dictionary = [], enlargeIn = 4, dictSize = 4, numBits = 3, entry = '', result = [],
+      i, w, bits, resb, maxpower, power, c,
+      data = { val: compressed.charCodeAt(0), position: 32768, index: 1 };
+
+    function readBits(n) {
+      var b = 0, mp = Math.pow(2, n), p = 1;
+      while (p != mp) {
+        resb = data.val & data.position;
+        data.position >>= 1;
+        if (data.position == 0) { data.position = 32768; data.val = compressed.charCodeAt(data.index++); }
+        b |= (resb > 0 ? 1 : 0) * p;
+        p <<= 1;
+      }
+      return b;
+    }
+
+    for (i = 0; i < 3; i += 1) dictionary[i] = i;
+
+    bits = readBits(2);
+    switch (bits) {
+      case 0: c = String.fromCharCode(readBits(8)); break;
+      case 1: c = String.fromCharCode(readBits(16)); break;
+      case 2: return '';
+    }
+    dictionary[3] = c;
+    w = c;
+    result.push(c);
+    while (true) {
+      if (data.index > compressed.length) return '';
+      c = readBits(numBits);
+
+      switch (c) {
+        case 0:
+          dictionary[dictSize++] = String.fromCharCode(readBits(8));
+          c = dictSize - 1;
+          enlargeIn--;
+          break;
+        case 1:
+          dictionary[dictSize++] = String.fromCharCode(readBits(16));
+          c = dictSize - 1;
+          enlargeIn--;
+          break;
+        case 2:
+          return result.join('');
+      }
+
+      if (enlargeIn == 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
+
+      if (dictionary[c]) entry = dictionary[c];
+      else { if (c === dictSize) entry = w + w.charAt(0); else return null; }
+
+      result.push(entry);
+      dictionary[dictSize++] = w + entry.charAt(0);
+      enlargeIn--;
+      w = entry;
+      if (enlargeIn == 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
+    }
+  }
+
+  return { compress: compress, decompress: decompress };
+})();
+if (typeof module !== 'undefined' && module.exports) module.exports = LZString;
+
+
+/* ===== data.js ===== */
+/* ============================================================
+   SE-COS — data.js
+   Static embedded data: resources, companies, problem seeds,
+   system design topics, behavioral questions
+   ============================================================ */
+
+const DSA_TOPICS = [
+  'arrays', 'strings', 'hash-map', 'two-pointers', 'sliding-window',
+  'stack', 'queue', 'linked-list', 'trees', 'binary-search-tree',
+  'heap', 'graphs', 'backtracking', 'dynamic-programming', 'greedy',
+  'binary-search', 'sorting', 'bit-manipulation', 'math', 'design'
+];
+
+const COMPANY_LIST = ['google', 'stripe', 'uber', 'atlassian', 'databricks', 'microsoft', 'salesforce', 'apple', 'anthropic', 'openai'];
+
+/* ---------- RESOURCES_DB ---------- */
+const RESOURCES_DB = {
+  'res-ctci': { id: 'res-ctci', title: 'Cracking the Coding Interview (6th Ed.)', author: 'Gayle Laakmann McDowell', category: 'book', priority: 1, roi: 5, difficulty: 'intermediate', estimatedHours: 80, targetCompanies: ['all'], mustDo: 'must', tags: ['dsa', 'foundations'], url: 'https://www.crackingthecodinginterview.com/', description: 'The canonical interview prep book covering DSA fundamentals and interview strategy.' },
+  'res-ddia': { id: 'res-ddia', title: 'Designing Data-Intensive Applications', author: 'Martin Kleppmann', category: 'book', priority: 1, roi: 5, difficulty: 'advanced', estimatedHours: 60, targetCompanies: ['all'], mustDo: 'must', tags: ['system-design', 'distributed-systems'], url: 'https://dataintensive.net/', description: 'The definitive deep-dive into distributed systems and data infrastructure.' },
+  'res-sdi-v1': { id: 'res-sdi-v1', title: 'System Design Interview, Vol. 1', author: 'Alex Xu', category: 'book', priority: 1, roi: 5, difficulty: 'intermediate', estimatedHours: 30, targetCompanies: ['all'], mustDo: 'must', tags: ['system-design'], url: '', description: 'Approachable, diagram-driven system design walkthroughs.' },
+  'res-sdi-v2': { id: 'res-sdi-v2', title: 'System Design Interview, Vol. 2', author: 'Alex Xu', category: 'book', priority: 2, roi: 4, difficulty: 'advanced', estimatedHours: 30, targetCompanies: ['google', 'stripe', 'databricks'], mustDo: 'nice', tags: ['system-design'], url: '', description: 'Advanced system design scenarios for senior+ interviews.' },
+  'res-epi': { id: 'res-epi', title: 'Elements of Programming Interviews (Python)', author: 'Aziz, Lee, Prakash', category: 'book', priority: 2, roi: 4, difficulty: 'advanced', estimatedHours: 100, targetCompanies: ['google', 'apple'], mustDo: 'nice', tags: ['dsa'], url: '', description: 'Dense, rigorous problem set for advanced practitioners.' },
+  'res-algo-manual': { id: 'res-algo-manual', title: 'The Algorithm Design Manual', author: 'Steven Skiena', category: 'book', priority: 3, roi: 3, difficulty: 'advanced', estimatedHours: 80, targetCompanies: ['google'], mustDo: 'optional', tags: ['dsa', 'theory'], url: '', description: 'Theoretical foundations of algorithm design.' },
+  'res-clean-code': { id: 'res-clean-code', title: 'Clean Code', author: 'Robert C. Martin', category: 'book', priority: 3, roi: 3, difficulty: 'beginner', estimatedHours: 20, targetCompanies: ['all'], mustDo: 'optional', tags: ['craft'], url: '', description: 'Principles for writing maintainable, readable code.' },
+
+  'res-neetcode150': { id: 'res-neetcode150', title: 'NeetCode 150', author: 'NeetCode', category: 'leetcode_list', priority: 1, roi: 5, difficulty: 'intermediate', estimatedHours: 120, targetCompanies: ['all'], mustDo: 'must', tags: ['dsa', 'patterns'], url: 'https://neetcode.io/practice', description: 'The most efficient curated problem set covering all core patterns.' },
+  'res-blind75': { id: 'res-blind75', title: 'Blind 75', author: 'Community', category: 'leetcode_list', priority: 1, roi: 5, difficulty: 'intermediate', estimatedHours: 60, targetCompanies: ['all'], mustDo: 'must', tags: ['dsa', 'patterns'], url: '', description: 'The original essential-75 problem list, still highly relevant.' },
+  'res-grind75': { id: 'res-grind75', title: 'Grind 75', author: 'Tech Interview Handbook', category: 'leetcode_list', priority: 2, roi: 4, difficulty: 'intermediate', estimatedHours: 75, targetCompanies: ['all'], mustDo: 'nice', tags: ['dsa'], url: 'https://www.techinterviewhandbook.org/grind75', description: 'Time-boxed and scheduling-aware version of Blind 75.' },
+  'res-lc-top100': { id: 'res-lc-top100', title: 'LeetCode Top 100 Liked', author: 'LeetCode', category: 'leetcode_list', priority: 2, roi: 4, difficulty: 'intermediate', estimatedHours: 100, targetCompanies: ['all'], mustDo: 'nice', tags: ['dsa'], url: '', description: 'Community-favorited problems for breadth practice.' },
+  'res-lc-google': { id: 'res-lc-google', title: 'LeetCode Company-Tagged: Google (6mo)', author: 'LeetCode', category: 'leetcode_list', priority: 2, roi: 5, difficulty: 'advanced', estimatedHours: 40, targetCompanies: ['google'], mustDo: 'must', tags: ['dsa', 'company-specific'], url: '', description: 'Recently asked Google interview questions.' },
+  'res-lc-stripe': { id: 'res-lc-stripe', title: 'LeetCode Company-Tagged: Stripe (6mo)', author: 'LeetCode', category: 'leetcode_list', priority: 2, roi: 5, difficulty: 'advanced', estimatedHours: 30, targetCompanies: ['stripe'], mustDo: 'must', tags: ['dsa', 'company-specific'], url: '', description: 'Recently asked Stripe interview questions.' },
+  'res-neetcode-all': { id: 'res-neetcode-all', title: 'NeetCode All (400+)', author: 'NeetCode', category: 'leetcode_list', priority: 3, roi: 3, difficulty: 'advanced', estimatedHours: 300, targetCompanies: ['google', 'databricks'], mustDo: 'optional', tags: ['dsa'], url: '', description: 'Comprehensive problem bank for deep mastery.' },
+
+  'res-grokking-patterns': { id: 'res-grokking-patterns', title: 'Grokking the Coding Interview (Patterns)', author: 'Educative.io', category: 'course', priority: 1, roi: 5, difficulty: 'intermediate', estimatedHours: 40, targetCompanies: ['all'], mustDo: 'must', tags: ['dsa', 'patterns', 'video'], url: 'https://www.educative.io/courses/grokking-the-coding-interview', description: 'Pattern-based course mapping problems to reusable templates.' },
+  'res-grokking-sd': { id: 'res-grokking-sd', title: 'Grokking System Design Fundamentals', author: 'Educative.io', category: 'course', priority: 1, roi: 5, difficulty: 'intermediate', estimatedHours: 30, targetCompanies: ['all'], mustDo: 'must', tags: ['system-design'], url: '', description: 'Structured foundations course for system design interviews.' },
+  'res-neetcode-pro': { id: 'res-neetcode-pro', title: 'NeetCode Pro — DSA Course', author: 'NeetCode', category: 'course', priority: 2, roi: 4, difficulty: 'intermediate', estimatedHours: 60, targetCompanies: ['all'], mustDo: 'nice', tags: ['dsa', 'video'], url: '', description: 'Premium video walkthroughs with spaced repetition tooling.' },
+  'res-algoexpert': { id: 'res-algoexpert', title: 'AlgoExpert (100 problems + video)', author: 'AlgoExpert', category: 'course', priority: 2, roi: 4, difficulty: 'intermediate', estimatedHours: 80, targetCompanies: ['all'], mustDo: 'nice', tags: ['dsa', 'video'], url: '', description: 'Structured video-explained problem set.' },
+  'res-sd-primer': { id: 'res-sd-primer', title: 'System Design Primer (free, GitHub)', author: 'donnemartin', category: 'course', priority: 1, roi: 5, difficulty: 'beginner', estimatedHours: 20, targetCompanies: ['all'], mustDo: 'must', tags: ['system-design', 'free'], url: 'https://github.com/donnemartin/system-design-primer', description: 'Free, comprehensive open-source system design reference.' },
+  'res-bytebytego-course': { id: 'res-bytebytego-course', title: 'ByteByteGo System Design Course', author: 'Alex Xu', category: 'course', priority: 2, roi: 4, difficulty: 'intermediate', estimatedHours: 40, targetCompanies: ['all'], mustDo: 'nice', tags: ['system-design', 'video'], url: '', description: 'Visual, animated explanations of system design concepts.' },
+  'res-csdojo-fundamentals': { id: 'res-csdojo-fundamentals', title: 'CS Dojo — DSA Fundamentals', author: 'CS Dojo', category: 'course', priority: 3, roi: 3, difficulty: 'beginner', estimatedHours: 15, targetCompanies: ['all'], mustDo: 'optional', tags: ['dsa', 'beginner'], url: '', description: 'Beginner-friendly DSA fundamentals course.' },
+
+  'res-yt-neetcode': { id: 'res-yt-neetcode', title: 'NeetCode (YouTube)', author: 'NeetCode', category: 'youtube', priority: 1, roi: 5, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'must', tags: ['dsa', 'video'], url: 'https://www.youtube.com/@NeetCode', description: 'DSA problem walkthroughs, the gold standard channel.' },
+  'res-yt-bytebytego': { id: 'res-yt-bytebytego', title: 'ByteByteGo (YouTube)', author: 'Alex Xu', category: 'youtube', priority: 1, roi: 5, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'must', tags: ['system-design', 'video'], url: '', description: 'Animated system design explainers.' },
+  'res-yt-exponent': { id: 'res-yt-exponent', title: 'Exponent (YouTube)', author: 'Exponent', category: 'youtube', priority: 2, roi: 4, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'must', tags: ['behavioral', 'mock-interview'], url: '', description: 'Mock interviews and behavioral coaching.' },
+  'res-yt-techlead': { id: 'res-yt-techlead', title: 'TechLead (YouTube)', author: 'TechLead', category: 'youtube', priority: 3, roi: 3, difficulty: 'beginner', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'nice', tags: ['career', 'culture'], url: '', description: 'FAANG culture and career commentary.' },
+  'res-yt-algoexpert-channel': { id: 'res-yt-algoexpert-channel', title: 'Clément Mihailescu (YouTube)', author: 'AlgoExpert founder', category: 'youtube', priority: 2, roi: 4, difficulty: 'advanced', estimatedHours: 0, targetCompanies: ['google'], mustDo: 'nice', tags: ['dsa', 'system-design'], url: '', description: 'Advanced DSA and system design content.' },
+  'res-yt-jordan': { id: 'res-yt-jordan', title: 'Jordan Has No Life (YouTube)', author: 'Jordan', category: 'youtube', priority: 2, roi: 4, difficulty: 'advanced', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'nice', tags: ['system-design'], url: '', description: 'Deep-dive system design sessions.' },
+  'res-yt-gaurav': { id: 'res-yt-gaurav', title: 'Gaurav Sen (YouTube)', author: 'Gaurav Sen', category: 'youtube', priority: 2, roi: 4, difficulty: 'beginner', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'nice', tags: ['system-design', 'beginner'], url: '', description: 'System design fundamentals for beginners.' },
+
+  'res-highscalability': { id: 'res-highscalability', title: 'High Scalability', author: 'highscalability.com', category: 'blog', priority: 1, roi: 5, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'must', tags: ['system-design', 'case-study'], url: 'http://highscalability.com/', description: 'Real-world architecture case studies.' },
+  'res-morning-paper': { id: 'res-morning-paper', title: 'The Morning Paper', author: 'Adrian Colyer', category: 'blog', priority: 2, roi: 4, difficulty: 'advanced', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'nice', tags: ['research', 'distributed-systems'], url: '', description: 'CS research paper summaries.' },
+  'res-netflix-blog': { id: 'res-netflix-blog', title: 'Netflix Tech Blog', author: 'Netflix', category: 'blog', priority: 2, roi: 4, difficulty: 'advanced', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'nice', tags: ['system-design', 'production'], url: '', description: 'Production distributed systems insights.' },
+  'res-stripe-blog': { id: 'res-stripe-blog', title: 'Stripe Engineering Blog', author: 'Stripe', category: 'blog', priority: 1, roi: 5, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['stripe'], mustDo: 'must', tags: ['payments', 'reliability'], url: '', description: 'Payments, reliability, and API design insights.' },
+  'res-google-research-blog': { id: 'res-google-research-blog', title: 'Google Research Blog', author: 'Google', category: 'blog', priority: 2, roi: 4, difficulty: 'advanced', estimatedHours: 0, targetCompanies: ['google'], mustDo: 'nice', tags: ['ml', 'infrastructure'], url: '', description: 'ML and infrastructure research from Google.' },
+  'res-uber-blog': { id: 'res-uber-blog', title: 'Uber Engineering Blog', author: 'Uber', category: 'blog', priority: 2, roi: 4, difficulty: 'advanced', estimatedHours: 0, targetCompanies: ['uber'], mustDo: 'nice', tags: ['real-time', 'geo'], url: '', description: 'Real-time systems, maps, and payments engineering.' },
+  'res-tih-guide': { id: 'res-tih-guide', title: 'Tech Interview Handbook', author: 'yangshun', category: 'blog', priority: 1, roi: 5, difficulty: 'beginner', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'must', tags: ['guide', 'free'], url: 'https://www.techinterviewhandbook.org/', description: 'End-to-end free interview prep guide.' },
+  'res-interviewingio-blog': { id: 'res-interviewingio-blog', title: 'Interviewing.io Blog', author: 'Interviewing.io', category: 'blog', priority: 2, roi: 4, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'nice', tags: ['data', 'interview-insights'], url: '', description: 'Data-driven insights from real mock interviews.' },
+
+  'res-interviewingio': { id: 'res-interviewingio', title: 'Interviewing.io', author: 'Interviewing.io', category: 'mock_platform', priority: 1, roi: 5, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'must', tags: ['mock-interview'], url: 'https://interviewing.io/', description: 'Anonymous peer mock interviews, closest to the real thing.' },
+  'res-pramp': { id: 'res-pramp', title: 'Pramp', author: 'Pramp', category: 'mock_platform', priority: 1, roi: 5, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'must', tags: ['mock-interview', 'free'], url: 'https://www.pramp.com/', description: 'Free peer-to-peer mock interview platform.' },
+  'res-exponent-mock': { id: 'res-exponent-mock', title: 'Exponent Mock Interviews', author: 'Exponent', category: 'mock_platform', priority: 2, roi: 4, difficulty: 'advanced', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'nice', tags: ['mock-interview', 'expert-led'], url: '', description: 'Expert-led mock interviews with FAANG-experienced coaches.' },
+  'res-meetapro': { id: 'res-meetapro', title: 'Meetapro', author: 'Meetapro', category: 'mock_platform', priority: 2, roi: 4, difficulty: 'advanced', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'nice', tags: ['mock-interview', 'expert-led'], url: '', description: 'Expert FAANG interviewer mock sessions.' },
+  'res-lc-assessments': { id: 'res-lc-assessments', title: 'LeetCode Mock Assessments', author: 'LeetCode', category: 'mock_platform', priority: 2, roi: 4, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'nice', tags: ['mock-interview', 'timed'], url: '', description: 'Timed, company-style coding assessments.' },
+
+  'res-sed-podcast': { id: 'res-sed-podcast', title: 'Software Engineering Daily', author: 'SE Daily', category: 'podcast', priority: 2, roi: 4, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'nice', tags: ['system-design', 'culture'], url: '', description: 'System design and engineering culture conversations.' },
+  'res-lex-podcast': { id: 'res-lex-podcast', title: 'Lex Fridman Podcast', author: 'Lex Fridman', category: 'podcast', priority: 3, roi: 3, difficulty: 'beginner', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'optional', tags: ['ai', 'culture'], url: '', description: 'AI, deep tech, and founder conversations.' },
+  'res-changelog-podcast': { id: 'res-changelog-podcast', title: 'The Changelog', author: 'Changelog Media', category: 'podcast', priority: 3, roi: 3, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'optional', tags: ['open-source', 'culture'], url: '', description: 'Open source and engineering culture.' },
+  'res-corecursive-podcast': { id: 'res-corecursive-podcast', title: 'CoRecursive', author: 'CoRecursive', category: 'podcast', priority: 3, roi: 3, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'optional', tags: ['engineering-stories'], url: '', description: 'Deep engineering craft stories.' },
+
+  'res-levelsfyi': { id: 'res-levelsfyi', title: 'Levels.fyi', author: 'Levels.fyi', category: 'networking', priority: 1, roi: 5, difficulty: 'beginner', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'must', tags: ['compensation'], url: 'https://www.levels.fyi/', description: 'Compensation benchmarking across companies and levels.' },
+  'res-blind-app': { id: 'res-blind-app', title: 'Blind (Team Blind)', author: 'Team Blind', category: 'networking', priority: 2, roi: 4, difficulty: 'beginner', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'nice', tags: ['community'], url: '', description: 'Anonymous professional engineering community.' },
+  'res-linkedin-outreach': { id: 'res-linkedin-outreach', title: 'LinkedIn Alumni Outreach', author: '—', category: 'networking', priority: 1, roi: 5, difficulty: 'beginner', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'must', tags: ['referral'], url: '', description: 'Referral networking through alumni connections.' },
+  'res-resume-worded': { id: 'res-resume-worded', title: 'Resume Worded', author: 'Resume Worded', category: 'resume', priority: 2, roi: 4, difficulty: 'beginner', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'nice', tags: ['resume'], url: '', description: 'AI-powered resume scoring tool.' },
+  'res-jakes-resume': { id: 'res-jakes-resume', title: "Jake's Resume Template (LaTeX)", author: 'Jake Gutierrez', category: 'resume', priority: 1, roi: 5, difficulty: 'beginner', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'must', tags: ['resume', 'template'], url: '', description: 'FAANG-standard resume LaTeX template.' },
+
+  'res-ddia-notes': { id: 'res-ddia-notes', title: 'DDIA Chapter Notes', author: 'Martin Kleppmann', category: 'system_design_resource', priority: 1, roi: 5, difficulty: 'advanced', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'must', tags: ['distributed-systems'], url: '', description: 'Distilled notes on consensus, CAP, replication.' },
+  'res-aws-waf': { id: 'res-aws-waf', title: 'AWS Well-Architected Framework', author: 'AWS', category: 'system_design_resource', priority: 2, roi: 4, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'nice', tags: ['cloud-architecture'], url: '', description: 'Free cloud architecture pattern reference.' },
+  'res-papers-we-love': { id: 'res-papers-we-love', title: 'Papers We Love — Distributed Systems', author: 'Community', category: 'system_design_resource', priority: 3, roi: 3, difficulty: 'advanced', estimatedHours: 0, targetCompanies: ['google'], mustDo: 'optional', tags: ['research', 'raft', 'paxos'], url: '', description: 'Raft, Paxos, Spanner, Dynamo paper discussions.' },
+  'res-google-sre': { id: 'res-google-sre', title: 'Google SRE Book', author: 'Google', category: 'system_design_resource', priority: 2, roi: 4, difficulty: 'intermediate', estimatedHours: 0, targetCompanies: ['google'], mustDo: 'nice', tags: ['reliability', 'sre'], url: 'https://sre.google/books/', description: 'Free reference on reliability, SLOs, and on-call practice.' },
+  'res-burns-ds': { id: 'res-burns-ds', title: 'Designing Distributed Systems', author: 'Brendan Burns', category: 'system_design_resource', priority: 3, roi: 3, difficulty: 'advanced', estimatedHours: 0, targetCompanies: ['all'], mustDo: 'optional', tags: ['patterns'], url: '', description: 'Reusable patterns for distributed systems design.' }
+};
+
+/* ---------- COMPANIES_DB ---------- */
+const COMPANIES_DB = {
+  google: {
+    id: 'google', name: 'Google', difficultyRating: 'Very High', hiringBar: 'Extremely High',
+    process: [
+      'Recruiter screen (30 min) — background, interest, timeline',
+      'Phone screen (45 min) — 1–2 LC Medium/Hard DSA problems',
+      'Onsite loop: 4–5 rounds (virtual or in-person)',
+      'Round types: 2x DSA coding, 1x system design, 1x behavioral (Googleyness), 1x bonus DSA',
+      'Hiring Committee review makes the offer decision',
+      'Team matching after HC approval'
+    ],
+    dsaExpectations: 'LC Medium fluency required; LC Hard expected at L5+. Graphs, trees, DP, backtracking, two pointers are high frequency. Optimal time AND space complexity expected.',
+    systemDesignExpectations: 'Design at scale: 1B+ users as a starting assumption. Deep on distributed consistency, Spanner-style global databases. Know Bigtable, Spanner, Colossus, Pub/Sub.',
+    behavioralExpectations: 'Cognitive ability, role-related knowledge, leadership, and "Googleyness" — comfort with ambiguity, collaborative, bias for action. STAR format with examples of impact at scale.',
+    recommendedResources: ['res-neetcode150', 'res-lc-google', 'res-sdi-v1', 'res-sdi-v2', 'res-ddia'],
+    prepRoadmap: 'Months 1–2: NeetCode 150 + all DSA patterns. Month 3: LC Hard daily + Google-tagged problems. Month 4: System design (DDIA + ByteByteGo + Alex Xu Vol 1 & 2). Month 5: Mock interviews. Month 6: Google-specific mocks + behavioral STAR bank.',
+    compBands: [
+      { level: 'L3', title: 'SWE I', range: '$180–230K' },
+      { level: 'L4', title: 'SWE II', range: '$250–320K' },
+      { level: 'L5', title: 'Senior SWE', range: '$350–480K' },
+      { level: 'L6', title: 'Staff SWE', range: '$500–700K' },
+      { level: 'L7', title: 'Sr. Staff', range: '$700K–1.2M' }
+    ],
+    checklist: [
+      { id: 'research-process', label: 'Research Google interview process & team structure' },
+      { id: 'lc-blind75', label: 'Complete Blind 75' },
+      { id: 'lc-neetcode150', label: 'Complete NeetCode 150' },
+      { id: 'lc-company-tagged', label: 'Complete Google-tagged LeetCode problems' },
+      { id: 'sd-fundamentals', label: 'Complete System Design fundamentals course' },
+      { id: 'sd-google-scale', label: 'Study Google-scale infra: Spanner, Bigtable, Colossus' },
+      { id: 'mock-3plus', label: 'Complete 3+ mock interviews' },
+      { id: 'behavioral-stories', label: 'Write 8+ Googleyness STAR stories' },
+      { id: 'comp-research', label: 'Research comp bands on Levels.fyi' }
+    ]
+  },
+  stripe: {
+    id: 'stripe', name: 'Stripe', difficultyRating: 'Very High', hiringBar: 'Extremely High',
+    process: [
+      'Recruiter screen + technical screen (1 LC problem, language of choice)',
+      'Take-home: Stripe coding challenge (2–4h, real-world API design or debugging)',
+      'Onsite: 4–5 rounds: 2x coding, 1x system design, 1x integration problem, 1x bug hunt',
+      'Integration problem = design a payment API or webhook system',
+      'Culture fit: "Would I trust this person with production at 3am?"'
+    ],
+    dsaExpectations: 'Less pure LC, more practical: API design, parsing, state machines. Debugging and reading existing code is part of the onsite.',
+    systemDesignExpectations: 'Payment systems, double-entry ledgers, idempotency keys, webhook delivery at scale, retry semantics, exactly-once delivery, API versioning.',
+    behavioralExpectations: 'Strong focus on reliability mindset and ownership. Examples of debugging production issues and shipping with rigor are valued.',
+    recommendedResources: ['res-lc-stripe', 'res-stripe-blog', 'res-sdi-v1'],
+    prepRoadmap: 'Months 1–2: API design practice + debugging exercises. Month 3: Payments domain reading (Stripe blog). Month 4: System design for ledgers and webhooks. Month 5–6: Mocks focused on integration problems.',
+    compBands: [
+      { level: 'IC3', title: 'SWE', range: '$220–280K' },
+      { level: 'IC4', title: 'Senior SWE', range: '$320–420K' },
+      { level: 'IC5', title: 'Staff SWE', range: '$480–620K' },
+      { level: 'IC6', title: 'Senior Staff', range: '$650K–900K' }
+    ],
+    checklist: [
+      { id: 'research-process', label: 'Research Stripe interview process' },
+      { id: 'api-design-practice', label: 'Practice API design exercises' },
+      { id: 'lc-company-tagged', label: 'Complete Stripe-tagged LeetCode problems' },
+      { id: 'payments-domain', label: 'Read Stripe Engineering Blog (10+ posts)' },
+      { id: 'sd-ledgers', label: 'Study double-entry ledger & idempotency design' },
+      { id: 'mock-3plus', label: 'Complete 3+ mock interviews' },
+      { id: 'behavioral-stories', label: 'Write reliability/ownership STAR stories' }
+    ]
+  },
+  uber: {
+    id: 'uber', name: 'Uber', difficultyRating: 'High', hiringBar: 'High',
+    process: [
+      'HackerRank OA (2 problems, 90 min)',
+      'Technical phone screen (1–2 LC problems)',
+      'Onsite: 2x coding, 1x system design, 1x behavioral',
+      'System design focused on real-time geo/matching problems'
+    ],
+    dsaExpectations: 'Graphs and route optimization heavy. LC Medium comfortable, some Hard.',
+    systemDesignExpectations: 'Real-time systems: ride matching, ETA, geospatial indexing. Distributed systems: Kafka, Cassandra, Uber Schemaless.',
+    behavioralExpectations: 'Scrappy, ownership-driven culture. Value examples of moving fast and handling ambiguity.',
+    recommendedResources: ['res-neetcode150', 'res-uber-blog', 'res-sdi-v1'],
+    prepRoadmap: 'Months 1–2: NeetCode 150 with graph emphasis. Month 3: Real-time/geo system design study. Month 4: Mocks + Uber blog reading.',
+    compBands: [
+      { level: 'L4', title: 'SWE II', range: '$200–270K' },
+      { level: 'L5', title: 'Senior', range: '$300–400K' },
+      { level: 'L6', title: 'Staff', range: '$430–580K' }
+    ],
+    checklist: [
+      { id: 'research-process', label: 'Research Uber interview process' },
+      { id: 'lc-neetcode150', label: 'Complete NeetCode 150 with graph focus' },
+      { id: 'sd-realtime-geo', label: 'Study real-time geo/matching system design' },
+      { id: 'mock-2plus', label: 'Complete 2+ mock interviews' },
+      { id: 'behavioral-stories', label: 'Write ownership/speed STAR stories' }
+    ]
+  },
+  atlassian: {
+    id: 'atlassian', name: 'Atlassian', difficultyRating: 'Medium', hiringBar: 'High',
+    process: [
+      'Technical screen (Karat-style third-party)',
+      'Onsite: 3 rounds — 1x coding, 1x system design, 1x values-based behavioral',
+      'Values: Open company no bullshit, heart of a champion, team before self'
+    ],
+    dsaExpectations: 'LC Medium bar; less focus on LC Hard than FAANG.',
+    systemDesignExpectations: 'Collaborative tools at scale (Jira, Confluence-style systems).',
+    behavioralExpectations: 'Values fit weighted as heavily as technical skill. Strong emphasis on collaboration and "team before self."',
+    recommendedResources: ['res-neetcode150', 'res-sdi-v1'],
+    prepRoadmap: 'Months 1–2: NeetCode 150. Month 3: System design for collaboration tools. Month 4: Mocks + values-alignment story prep.',
+    compBands: [
+      { level: 'P3', title: 'SWE', range: '$160–210K' },
+      { level: 'P4', title: 'Senior SWE', range: '$230–300K' },
+      { level: 'P5', title: 'Staff SWE', range: '$320–420K' }
+    ],
+    checklist: [
+      { id: 'research-process', label: 'Research Atlassian interview process' },
+      { id: 'lc-medium-practice', label: 'Complete LC Medium-focused practice set' },
+      { id: 'sd-collab-tools', label: 'Study collaborative-tools system design' },
+      { id: 'values-stories', label: 'Write values-aligned STAR stories' },
+      { id: 'mock-2plus', label: 'Complete 2+ mock interviews' }
+    ]
+  },
+  databricks: {
+    id: 'databricks', name: 'Databricks', difficultyRating: 'Very High', hiringBar: 'Extremely High (infra roles)',
+    process: [
+      'Recruiter screen + take-home (system design document or coding project)',
+      'Onsite: 3–4 rounds — 2x coding, 1x deep system design, 1x domain knowledge',
+      'Domain: Spark internals, Delta Lake, distributed query execution'
+    ],
+    dsaExpectations: 'LC Hard expected; emphasis on correctness over speed.',
+    systemDesignExpectations: 'Distributed data processing (Spark, Flink), storage systems (Delta Lake, Parquet), query engines, streaming pipelines.',
+    behavioralExpectations: 'Deep technical curiosity and rigor valued highly; less emphasis on soft culture-fit framing.',
+    recommendedResources: ['res-ddia', 'res-neetcode-all', 'res-sdi-v2'],
+    prepRoadmap: 'Months 1–2: Distributed systems theory (DDIA). Month 3: Spark/Delta Lake internals study. Month 4–5: NeetCode Hard problems. Month 6: Domain-specific mocks.',
+    compBands: [
+      { level: 'IC3', title: 'SWE', range: '$230–300K' },
+      { level: 'IC4', title: 'Senior SWE', range: '$340–460K' },
+      { level: 'IC5', title: 'Staff SWE', range: '$500–700K' }
+    ],
+    checklist: [
+      { id: 'research-process', label: 'Research Databricks interview process' },
+      { id: 'distributed-systems-theory', label: 'Study DDIA cover to cover' },
+      { id: 'spark-internals', label: 'Study Spark / Delta Lake internals' },
+      { id: 'lc-hard-practice', label: 'Complete LC Hard problem set' },
+      { id: 'mock-3plus', label: 'Complete 3+ mock interviews' }
+    ]
+  },
+  microsoft: {
+    id: 'microsoft', name: 'Microsoft', difficultyRating: 'Medium-High', hiringBar: 'High',
+    process: [
+      'Recruiter screen + HackerRank OA',
+      'Phone screen (LC Medium problems)',
+      'Onsite: 4 rounds — 3x coding + 1x hiring manager behavioral',
+      '"As Appropriate" interviewer round can extend the loop'
+    ],
+    dsaExpectations: 'LC Easy–Medium bar for most roles; LC Hard for Azure/AI roles. OOP design patterns commonly tested.',
+    systemDesignExpectations: 'Azure-aligned: microservices, event-driven architecture.',
+    behavioralExpectations: '"Growth mindset" — Microsoft\'s core cultural value. Collaborative, not competitive, framing preferred.',
+    recommendedResources: ['res-neetcode150', 'res-grokking-sd'],
+    prepRoadmap: 'Months 1–2: NeetCode 150 + OOP design pattern review. Month 3: Azure-style system design. Month 4: Mocks + growth-mindset story prep.',
+    compBands: [
+      { level: 'L62', title: 'SDE II', range: '$180–250K' },
+      { level: 'L63', title: 'Senior SDE', range: '$270–380K' },
+      { level: 'L65', title: 'Principal', range: '$400–600K' }
+    ],
+    checklist: [
+      { id: 'research-process', label: 'Research Microsoft interview process' },
+      { id: 'lc-easy-medium', label: 'Complete LC Easy–Medium problem set' },
+      { id: 'oop-patterns', label: 'Review OOP design patterns' },
+      { id: 'sd-azure-style', label: 'Study Azure-style system design' },
+      { id: 'growth-mindset-stories', label: 'Write growth-mindset STAR stories' },
+      { id: 'mock-2plus', label: 'Complete 2+ mock interviews' }
+    ]
+  },
+  salesforce: {
+    id: 'salesforce', name: 'Salesforce', difficultyRating: 'Medium', hiringBar: 'High',
+    process: [
+      'Technical screen (2 LC problems)',
+      'Onsite: 3–4 rounds — coding, system design, product knowledge, behavioral'
+    ],
+    dsaExpectations: 'LC Medium bar; some SQL and OOP design questions.',
+    systemDesignExpectations: 'Multi-tenant SaaS architecture is central to system design rounds.',
+    behavioralExpectations: 'Customer success, trust & integrity, equality, innovation — core company values assessed directly.',
+    recommendedResources: ['res-neetcode150', 'res-sdi-v1'],
+    prepRoadmap: 'Months 1–2: NeetCode 150 + SQL practice. Month 3: Multi-tenant SaaS system design study. Month 4: Mocks + values-story prep.',
+    compBands: [
+      { level: 'SMTS', title: 'Senior MTS', range: '$200–270K' },
+      { level: 'LMTS', title: 'Lead MTS', range: '$270–360K' },
+      { level: 'PMTS', title: 'Principal MTS', range: '$370–480K' }
+    ],
+    checklist: [
+      { id: 'research-process', label: 'Research Salesforce interview process' },
+      { id: 'lc-medium-sql', label: 'Complete LC Medium + SQL practice' },
+      { id: 'sd-multitenant', label: 'Study multi-tenant SaaS architecture' },
+      { id: 'values-stories', label: 'Write company-values STAR stories' },
+      { id: 'mock-2plus', label: 'Complete 2+ mock interviews' }
+    ]
+  },
+  apple: {
+    id: 'apple', name: 'Apple', difficultyRating: 'High', hiringBar: 'Very High (role-specific)',
+    process: [
+      'Recruiter screen + technical phone screen',
+      'Onsite: 4–6 rounds with different team members — very role-specific',
+      'Domain expertise weighted heavily (iOS, ML, infra, silicon teams differ significantly)'
+    ],
+    dsaExpectations: 'Deep domain expertise over generic LC patterns. Swift/Objective-C for iOS; C++/Metal for infra/silicon.',
+    systemDesignExpectations: 'Highly product-coupled (Maps, Siri, App Store). Privacy-by-design thinking expected in all discussions.',
+    behavioralExpectations: 'Secrecy and discretion valued; product craftsmanship and attention to detail assessed closely.',
+    recommendedResources: ['res-epi', 'res-sdi-v1'],
+    prepRoadmap: 'Months 1–2: Domain-specific deep dives (per target team). Month 3: Privacy-aware system design study. Month 4–5: Mocks tailored to specific team. Process timeline: expect 6–10 weeks.',
+    compBands: [
+      { level: 'ICT3', title: 'SWE', range: '$190–250K' },
+      { level: 'ICT4', title: 'Senior SWE', range: '$280–380K' },
+      { level: 'ICT5', title: 'Staff SWE', range: '$420–600K' }
+    ],
+    checklist: [
+      { id: 'research-process', label: 'Research Apple interview process for target team' },
+      { id: 'domain-expertise', label: 'Deep-dive domain expertise (iOS/ML/infra/silicon)' },
+      { id: 'privacy-design', label: 'Study privacy-by-design system patterns' },
+      { id: 'mock-2plus', label: 'Complete 2+ mock interviews' },
+      { id: 'craftsmanship-stories', label: 'Write product-craftsmanship STAR stories' }
+    ]
+  },
+  anthropic: {
+    id: 'anthropic', name: 'Anthropic', difficultyRating: 'Very High', hiringBar: 'Mission-critical',
+    process: [
+      'Recruiter screen + values alignment conversation',
+      'Technical phone screen (DSA, sometimes ML fundamentals)',
+      'Onsite: 4–5 rounds — 2x coding, 1x system design, 1x ML systems, 1x values/mission',
+      'Mission alignment is load-bearing: must demonstrate genuine safety commitment'
+    ],
+    dsaExpectations: 'Standard LC Medium/Hard expected. Python fluency expected; familiarity with JAX/PyTorch a plus.',
+    systemDesignExpectations: 'LLM serving infrastructure: batching, KV cache, token streaming. Training infra: distributed gradient sync, checkpointing. Safety-aware design (monitoring, red-teaming pipelines).',
+    behavioralExpectations: 'Intellectual honesty and epistemic humility weighted heavily. Must articulate genuine belief in AI safety mission, not just technical fit.',
+    recommendedResources: ['res-neetcode150', 'res-ddia', 'res-sdi-v2'],
+    prepRoadmap: 'Months 1–2: NeetCode 150 + Python/ML fundamentals refresh. Month 3: LLM serving + training infra study. Month 4: Safety/eval pipeline reading. Month 5–6: Mocks + mission-alignment story prep.',
+    compBands: [
+      { level: 'IC3', title: 'SWE', range: '$250–320K' },
+      { level: 'IC4', title: 'Senior SWE', range: '$380–500K' },
+      { level: 'IC5', title: 'Staff SWE', range: '$550–800K' }
+    ],
+    checklist: [
+      { id: 'research-process', label: 'Research Anthropic interview process' },
+      { id: 'lc-neetcode150', label: 'Complete NeetCode 150' },
+      { id: 'ml-infra-study', label: 'Study LLM serving & training infrastructure' },
+      { id: 'safety-reading', label: 'Read Anthropic safety research publications' },
+      { id: 'mission-stories', label: 'Prepare genuine mission-alignment narrative' },
+      { id: 'mock-3plus', label: 'Complete 3+ mock interviews' }
+    ]
+  },
+  openai: {
+    id: 'openai', name: 'OpenAI', difficultyRating: 'Very High', hiringBar: 'Extremely High',
+    process: [
+      'Recruiter screen + initial technical phone screen',
+      'Onsite: 4–5 rounds — 2x coding, 1x system design, 1x ML systems or research, 1x culture',
+      'Team-specific rounds vary (infra, applied, research)'
+    ],
+    dsaExpectations: 'Standard FAANG-tier DSA expected. GPU utilization, CUDA familiarity valued for infra roles.',
+    systemDesignExpectations: 'ML infra: model serving, training pipelines, distributed compute. Strong on reliability, latency, and scale for API serving roles.',
+    behavioralExpectations: 'Culture values speed, ambition, and first-principles thinking.',
+    recommendedResources: ['res-neetcode150', 'res-ddia', 'res-sdi-v2'],
+    prepRoadmap: 'Months 1–2: NeetCode 150 + ML systems refresh. Month 3: Distributed compute & model serving study. Month 4–5: Mocks. Month 6: Team-specific deep dive.',
+    compBands: [
+      { level: 'L2', title: 'SWE II', range: '$280–380K' },
+      { level: 'L3', title: 'Senior SWE', range: '$420–550K' },
+      { level: 'L4', title: 'Staff SWE', range: '$600K–900K+' }
+    ],
+    checklist: [
+      { id: 'research-process', label: 'Research OpenAI interview process' },
+      { id: 'lc-neetcode150', label: 'Complete NeetCode 150' },
+      { id: 'ml-infra-study', label: 'Study model serving & distributed compute' },
+      { id: 'mock-3plus', label: 'Complete 3+ mock interviews' },
+      { id: 'ambition-stories', label: 'Prepare first-principles / ambition STAR stories' }
+    ]
+  }
+};
+
+/* ---------- PROBLEM_SEEDS (curated starter set; user can add more) ---------- */
+const PROBLEM_SEEDS = [
+  { id: 'lc-1', name: 'Two Sum', difficulty: 'Easy', topics: ['arrays', 'hash-map'], companies: ['google', 'amazon', 'apple'] },
+  { id: 'lc-3', name: 'Longest Substring Without Repeating Characters', difficulty: 'Medium', topics: ['sliding-window', 'hash-map'], companies: ['google', 'microsoft'] },
+  { id: 'lc-15', name: '3Sum', difficulty: 'Medium', topics: ['arrays', 'two-pointers'], companies: ['google', 'microsoft', 'apple'] },
+  { id: 'lc-20', name: 'Valid Parentheses', difficulty: 'Easy', topics: ['stack'], companies: ['google', 'microsoft'] },
+  { id: 'lc-21', name: 'Merge Two Sorted Lists', difficulty: 'Easy', topics: ['linked-list'], companies: ['google', 'apple'] },
+  { id: 'lc-23', name: 'Merge k Sorted Lists', difficulty: 'Hard', topics: ['heap', 'linked-list'], companies: ['google', 'databricks'] },
+  { id: 'lc-33', name: 'Search in Rotated Sorted Array', difficulty: 'Medium', topics: ['binary-search', 'arrays'], companies: ['google', 'uber'] },
+  { id: 'lc-39', name: 'Combination Sum', difficulty: 'Medium', topics: ['backtracking'], companies: ['google', 'apple'] },
+  { id: 'lc-42', name: 'Trapping Rain Water', difficulty: 'Hard', topics: ['two-pointers', 'arrays'], companies: ['google', 'uber'] },
+  { id: 'lc-49', name: 'Group Anagrams', difficulty: 'Medium', topics: ['hash-map', 'strings'], companies: ['google', 'uber', 'microsoft'] },
+  { id: 'lc-53', name: 'Maximum Subarray', difficulty: 'Medium', topics: ['dynamic-programming', 'arrays'], companies: ['google', 'microsoft', 'apple'] },
+  { id: 'lc-56', name: 'Merge Intervals', difficulty: 'Medium', topics: ['arrays', 'sorting'], companies: ['google', 'uber', 'stripe'] },
+  { id: 'lc-70', name: 'Climbing Stairs', difficulty: 'Easy', topics: ['dynamic-programming'], companies: ['google', 'apple'] },
+  { id: 'lc-76', name: 'Minimum Window Substring', difficulty: 'Hard', topics: ['sliding-window', 'hash-map'], companies: ['google', 'uber'] },
+  { id: 'lc-78', name: 'Subsets', difficulty: 'Medium', topics: ['backtracking'], companies: ['google', 'microsoft'] },
+  { id: 'lc-98', name: 'Validate Binary Search Tree', difficulty: 'Medium', topics: ['trees', 'binary-search-tree'], companies: ['google', 'microsoft'] },
+  { id: 'lc-102', name: 'Binary Tree Level Order Traversal', difficulty: 'Medium', topics: ['trees', 'queue'], companies: ['google', 'amazon'] },
+  { id: 'lc-121', name: 'Best Time to Buy and Sell Stock', difficulty: 'Easy', topics: ['arrays', 'dynamic-programming'], companies: ['google', 'stripe', 'microsoft'] },
+  { id: 'lc-124', name: 'Binary Tree Maximum Path Sum', difficulty: 'Hard', topics: ['trees', 'dynamic-programming'], companies: ['google', 'apple'] },
+  { id: 'lc-127', name: 'Word Ladder', difficulty: 'Hard', topics: ['graphs', 'sliding-window'], companies: ['google', 'amazon'] },
+  { id: 'lc-128', name: 'Longest Consecutive Sequence', difficulty: 'Medium', topics: ['hash-map', 'arrays'], companies: ['google', 'microsoft'] },
+  { id: 'lc-133', name: 'Clone Graph', difficulty: 'Medium', topics: ['graphs'], companies: ['google', 'apple', 'amazon'] },
+  { id: 'lc-138', name: 'Copy List with Random Pointer', difficulty: 'Medium', topics: ['linked-list', 'hash-map'], companies: ['google', 'amazon'] },
+  { id: 'lc-139', name: 'Word Break', difficulty: 'Medium', topics: ['dynamic-programming'], companies: ['google', 'uber'] },
+  { id: 'lc-141', name: 'Linked List Cycle', difficulty: 'Easy', topics: ['linked-list', 'two-pointers'], companies: ['google', 'microsoft'] },
+  { id: 'lc-146', name: 'LRU Cache', difficulty: 'Medium', topics: ['design', 'hash-map', 'linked-list'], companies: ['google', 'amazon', 'uber', 'databricks'] },
+  { id: 'lc-152', name: 'Maximum Product Subarray', difficulty: 'Medium', topics: ['dynamic-programming', 'arrays'], companies: ['google', 'amazon'] },
+  { id: 'lc-153', name: 'Find Minimum in Rotated Sorted Array', difficulty: 'Medium', topics: ['binary-search'], companies: ['google', 'microsoft'] },
+  { id: 'lc-198', name: 'House Robber', difficulty: 'Medium', topics: ['dynamic-programming'], companies: ['google', 'apple'] },
+  { id: 'lc-200', name: 'Number of Islands', difficulty: 'Medium', topics: ['graphs'], companies: ['google', 'amazon', 'uber'] },
+  { id: 'lc-206', name: 'Reverse Linked List', difficulty: 'Easy', topics: ['linked-list'], companies: ['google', 'microsoft', 'apple'] },
+  { id: 'lc-207', name: 'Course Schedule', difficulty: 'Medium', topics: ['graphs'], companies: ['google', 'uber'] },
+  { id: 'lc-212', name: 'Word Search II', difficulty: 'Hard', topics: ['backtracking', 'trees'], companies: ['google', 'amazon'] },
+  { id: 'lc-221', name: 'Maximal Square', difficulty: 'Medium', topics: ['dynamic-programming'], companies: ['google'] },
+  { id: 'lc-230', name: 'Kth Smallest Element in a BST', difficulty: 'Medium', topics: ['binary-search-tree', 'trees'], companies: ['google', 'microsoft'] },
+  { id: 'lc-235', name: 'Lowest Common Ancestor of a BST', difficulty: 'Medium', topics: ['binary-search-tree', 'trees'], companies: ['google', 'amazon'] },
+  { id: 'lc-238', name: 'Product of Array Except Self', difficulty: 'Medium', topics: ['arrays'], companies: ['google', 'amazon', 'apple'] },
+  { id: 'lc-239', name: 'Sliding Window Maximum', difficulty: 'Hard', topics: ['sliding-window', 'heap'], companies: ['google', 'uber'] },
+  { id: 'lc-253', name: 'Meeting Rooms II', difficulty: 'Medium', topics: ['heap', 'sorting'], companies: ['google', 'uber'] },
+  { id: 'lc-261', name: 'Graph Valid Tree', difficulty: 'Medium', topics: ['graphs'], companies: ['google'] },
+  { id: 'lc-269', name: 'Alien Dictionary', difficulty: 'Hard', topics: ['graphs', 'sorting'], companies: ['google', 'airbnb'] },
+  { id: 'lc-295', name: 'Find Median from Data Stream', difficulty: 'Hard', topics: ['heap', 'design'], companies: ['google', 'amazon'] },
+  { id: 'lc-300', name: 'Longest Increasing Subsequence', difficulty: 'Medium', topics: ['dynamic-programming', 'binary-search'], companies: ['google', 'microsoft'] },
+  { id: 'lc-322', name: 'Coin Change', difficulty: 'Medium', topics: ['dynamic-programming'], companies: ['google', 'uber'] },
+  { id: 'lc-332', name: 'Reconstruct Itinerary', difficulty: 'Hard', topics: ['graphs'], companies: ['google'] },
+  { id: 'lc-347', name: 'Top K Frequent Elements', difficulty: 'Medium', topics: ['heap', 'hash-map'], companies: ['google', 'amazon', 'uber'] },
+  { id: 'lc-371', name: 'Sum of Two Integers', difficulty: 'Medium', topics: ['bit-manipulation'], companies: ['google'] },
+  { id: 'lc-416', name: 'Partition Equal Subset Sum', difficulty: 'Medium', topics: ['dynamic-programming'], companies: ['google'] },
+  { id: 'lc-424', name: 'Longest Repeating Character Replacement', difficulty: 'Medium', topics: ['sliding-window'], companies: ['google', 'uber'] },
+  { id: 'lc-435', name: 'Non-overlapping Intervals', difficulty: 'Medium', topics: ['greedy', 'sorting'], companies: ['google', 'stripe'] },
+  { id: 'lc-userdef-1', name: 'Design Rate Limiter (custom)', difficulty: 'Hard', topics: ['design'], companies: ['stripe', 'uber'] }
+];
+
+/* ---------- SYSTEM_DESIGN_TOPICS ---------- */
+const SYSTEM_DESIGN_TOPICS = [
+  { id: 'sd-url-shortener', name: 'URL Shortener', category: 'Classic', companies: ['google', 'microsoft'] },
+  { id: 'sd-rate-limiter', name: 'Rate Limiter', category: 'Classic', companies: ['stripe', 'uber'] },
+  { id: 'sd-distributed-cache', name: 'Distributed Cache', category: 'Storage', companies: ['google', 'databricks'] },
+  { id: 'sd-news-feed', name: 'News Feed System', category: 'Social', companies: ['google'] },
+  { id: 'sd-chat-system', name: 'Chat System (WhatsApp-style)', category: 'Real-time', companies: ['google', 'microsoft'] },
+  { id: 'sd-ride-sharing', name: 'Ride-Sharing / Matching System', category: 'Real-time', companies: ['uber'] },
+  { id: 'sd-payment-system', name: 'Payment Processing System', category: 'Financial', companies: ['stripe'] },
+  { id: 'sd-webhook-delivery', name: 'Webhook Delivery System', category: 'Financial', companies: ['stripe'] },
+  { id: 'sd-search-autocomplete', name: 'Search Autocomplete', category: 'Search', companies: ['google'] },
+  { id: 'sd-distributed-queue', name: 'Distributed Message Queue', category: 'Infrastructure', companies: ['uber', 'databricks'] },
+  { id: 'sd-video-streaming', name: 'Video Streaming Platform', category: 'Media', companies: ['google'] },
+  { id: 'sd-cdn', name: 'Content Delivery Network', category: 'Infrastructure', companies: ['google', 'apple'] },
+  { id: 'sd-key-value-store', name: 'Distributed Key-Value Store', category: 'Storage', companies: ['google', 'databricks'] },
+  { id: 'sd-notification-system', name: 'Notification System', category: 'Infrastructure', companies: ['google', 'microsoft'] },
+  { id: 'sd-leaderboard', name: 'Real-time Leaderboard', category: 'Real-time', companies: ['uber'] },
+  { id: 'sd-job-scheduler', name: 'Distributed Job Scheduler', category: 'Infrastructure', companies: ['databricks', 'google'] },
+  { id: 'sd-llm-serving', name: 'LLM Inference Serving System', category: 'ML Infra', companies: ['anthropic', 'openai'] },
+  { id: 'sd-training-pipeline', name: 'Distributed Training Pipeline', category: 'ML Infra', companies: ['anthropic', 'openai'] },
+  { id: 'sd-multitenant-saas', name: 'Multi-Tenant SaaS Architecture', category: 'Architecture', companies: ['salesforce', 'atlassian'] },
+  { id: 'sd-collab-editing', name: 'Collaborative Document Editing', category: 'Real-time', companies: ['atlassian', 'google'] }
+];
+
+/* ---------- BEHAVIORAL_QUESTIONS ---------- */
+const BEHAVIORAL_QUESTIONS = [
+  { id: 'beh-1', question: 'Tell me about a time you disagreed with a technical decision.', competencies: ['conflict', 'influence'] },
+  { id: 'beh-2', question: 'Describe a project that failed. What did you learn?', competencies: ['failure', 'growth'] },
+  { id: 'beh-3', question: 'Tell me about a time you had to deliver bad news to a stakeholder.', competencies: ['communication', 'ownership'] },
+  { id: 'beh-4', question: 'Describe a situation where you had to influence without authority.', competencies: ['influence', 'leadership'] },
+  { id: 'beh-5', question: 'Tell me about a time you took on something outside your job scope.', competencies: ['ownership', 'impact'] },
+  { id: 'beh-6', question: 'Describe a time you received critical feedback. How did you respond?', competencies: ['growth', 'humility'] },
+  { id: 'beh-7', question: 'Tell me about your most technically challenging project.', competencies: ['impact', 'technical-depth'] },
+  { id: 'beh-8', question: 'Describe a time you had to make a decision with incomplete information.', competencies: ['ambiguity', 'judgment'] },
+  { id: 'beh-9', question: 'Tell me about a conflict with a teammate and how you resolved it.', competencies: ['conflict', 'collaboration'] },
+  { id: 'beh-10', question: 'Describe a time you mentored or helped a struggling teammate.', competencies: ['leadership', 'collaboration'] },
+  { id: 'beh-11', question: 'Tell me about a time you missed a deadline. What happened?', competencies: ['failure', 'ownership'] },
+  { id: 'beh-12', question: 'Describe the most impactful project you have shipped.', competencies: ['impact'] },
+  { id: 'beh-13', question: 'Tell me about a time you pushed back on a product requirement.', competencies: ['influence', 'judgment'] },
+  { id: 'beh-14', question: 'Describe how you handle competing priorities.', competencies: ['ambiguity', 'judgment'] },
+  { id: 'beh-15', question: 'Tell me about a time you advocated for code quality or technical debt.', competencies: ['technical-depth', 'influence'] }
+];
+
+
+/* ===== app.js ===== */
+/* ============================================================
+   SE-COS — app.js
+   Core Infrastructure: EventBus, Router, StateManager, Migrator
+   ============================================================ */
+
+/* ---------- EventBus ---------- */
+const EventBus = (() => {
+  const listeners = {};
+  return {
+    on(event, fn) {
+      (listeners[event] = listeners[event] || []).push(fn);
+      return () => this.off(event, fn);
+    },
+    off(event, fn) {
+      if (!listeners[event]) return;
+      listeners[event] = listeners[event].filter(f => f !== fn);
+    },
+    emit(event, payload) {
+      (listeners[event] || []).forEach(fn => {
+        try { fn(payload); } catch (e) { console.error(`EventBus listener error on "${event}":`, e); }
+      });
+    }
+  };
+})();
+
+/* ---------- Default State Factory ---------- */
+function defaultState() {
+  return {
+    meta: {
+      version: '1.0.0',
+      createdAt: null,            // null = onboarding not complete
+      lastModified: new Date().toISOString(),
+      targetDate: null,
+      currentLevel: null,         // SDE1 | SDE2 | SDE3 | Staff
+      targetCompanies: []
+    },
+    problems: {},                 // id -> problem object
+    resources: {},                // id -> { status, startedAt, completedAt, notes }
+    systemDesign: {},             // id -> { status, notes, lastStudied }
+    behavioral: {},               // id -> STAR entry
+    companies: {},                // id -> { checklistProgress: {} }
+    sessions: [],                 // session log array
+    streak: { current: 0, longest: 0, lastActiveDate: null, history: {} },
+    settings: {
+      theme: 'system',
+      dailyGoalMinutes: 60,
+      lastBackupAt: null
+    }
+  };
+}
+
+/* ---------- Schema Migrator ---------- */
+const SchemaMigrator = {
+  CURRENT_VERSION: '1.0.0',
+  migrate(state) {
+    if (!state.meta) state.meta = defaultState().meta;
+    if (!state.meta.version) state.meta.version = '1.0.0';
+    // Future migrations append here as version-gated steps.
+    state.meta.version = this.CURRENT_VERSION;
+    return state;
+  }
+};
+
+/* ---------- Validator (lightweight) ---------- */
+const Validator = {
+  isValidProblem(p) {
+    return p && typeof p.id === 'string' && typeof p.name === 'string';
+  },
+  sanitizeNote(text, maxLen = 2000) {
+    if (typeof text !== 'string') return '';
+    return text.slice(0, maxLen);
+  }
+};
+
+/* ---------- StorageManager ---------- */
+const StorageManager = {
+  KEY: 'se-cos-v1',
+  THEME_KEY: 'se-cos-theme',
+  VIEW_KEY: 'se-cos-last-view',
+
+  save(state) {
+    try {
+      const json = JSON.stringify(state);
+      const compressed = (window.LZString) ? LZString.compress(json) : json;
+      localStorage.setItem(this.KEY, compressed);
+      return true;
+    } catch (e) {
+      console.error('StorageManager.save failed:', e);
+      return false;
+    }
+  },
+
+  load() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      if (!raw) return null;
+      const json = (window.LZString) ? LZString.decompress(raw) : raw;
+      if (!json) return null;
+      return JSON.parse(json);
+    } catch (e) {
+      console.error('StorageManager.load failed:', e);
+      return null;
+    }
+  },
+
+  estimateUsageBytes() {
+    let total = 0;
+    for (const k in localStorage) {
+      if (localStorage.hasOwnProperty(k) && k.startsWith('se-cos')) {
+        total += (localStorage[k] || '').length;
+      }
+    }
+    return total;
+  },
+
+  estimateUsagePercent() {
+    const LIMIT_BYTES = 5 * 1024 * 1024; // 5MB safe ceiling
+    return Math.min(100, Math.round((this.estimateUsageBytes() / LIMIT_BYTES) * 100));
+  }
+};
+
+/* ---------- StateManager ---------- */
+const StateManager = {
+  state: null,
+
+  init() {
+    const loaded = StorageManager.load();
+    this.state = loaded ? SchemaMigrator.migrate(loaded) : defaultState();
+    if (!this.state.meta.createdAt) {
+      EventBus.emit('app:needsOnboarding');
+    }
+  },
+
+  get(path) {
+    if (!path) return this.state;
+    return path.split('.').reduce((acc, key) => (acc == null ? acc : acc[key]), this.state);
+  },
+
+  /* Deep-set helper */
+  update(path, value) {
+    const keys = path.split('.');
+    let obj = this.state;
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (obj[keys[i]] == null || typeof obj[keys[i]] !== 'object') obj[keys[i]] = {};
+      obj = obj[keys[i]];
+    }
+    obj[keys[keys.length - 1]] = value;
+    this.state.meta.lastModified = new Date().toISOString();
+    this.persist();
+    EventBus.emit('state:changed', { path, value });
+  },
+
+  /* Merge an object into a path (shallow merge at that key) */
+  merge(path, partial) {
+    const current = this.get(path) || {};
+    this.update(path, { ...current, ...partial });
+  },
+
+  persist() {
+    StorageManager.save(this.state);
+  },
+
+  completeOnboarding({ targetCompanies, currentLevel, targetDate }) {
+    this.state.meta.createdAt = new Date().toISOString();
+    this.state.meta.targetCompanies = targetCompanies;
+    this.state.meta.currentLevel = currentLevel;
+    this.state.meta.targetDate = targetDate;
+    this.persist();
+    EventBus.emit('app:onboardingComplete');
+  },
+
+  resetAll() {
+    localStorage.removeItem(StorageManager.KEY);
+    this.state = defaultState();
+    this.persist();
+    EventBus.emit('app:reset');
+  }
+};
+
+/* ---------- Router ---------- */
+const Router = {
+  routes: {},
+  current: null,
+
+  register(routeId, renderFn) {
+    this.routes[routeId] = renderFn;
+  },
+
+  init() {
+    window.addEventListener('hashchange', () => this.handleHashChange());
+    this.handleHashChange();
+  },
+
+  handleHashChange() {
+    let hash = (window.location.hash || '#dashboard').replace('#', '');
+    if (!this.routes[hash]) hash = 'dashboard';
+    this.navigate(hash, false);
+  },
+
+  navigate(routeId, updateHash = true) {
+    if (!this.routes[routeId]) return;
+    this.current = routeId;
+    if (updateHash) window.location.hash = `#${routeId}`;
+    localStorage.setItem(StorageManager.VIEW_KEY, routeId);
+    EventBus.emit('router:navigate', routeId);
+    this.routes[routeId]();
+  }
+};
+
+/* ---------- Theme Manager ---------- */
+const ThemeManager = {
+  init() {
+    const saved = localStorage.getItem(StorageManager.THEME_KEY) || 'system';
+    this.apply(saved);
+  },
+  apply(mode) {
+    const root = document.documentElement;
+    let resolved = mode;
+    if (mode === 'system') {
+      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    root.setAttribute('data-theme', resolved);
+    localStorage.setItem(StorageManager.THEME_KEY, mode);
+    EventBus.emit('theme:changed', { mode, resolved });
+  },
+  current() {
+    return localStorage.getItem(StorageManager.THEME_KEY) || 'system';
+  }
+};
+
+/* ---------- Toast System ---------- */
+const Toast = {
+  show(message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    el.setAttribute('role', 'status');
+    el.textContent = message;
+    container.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('toast-visible'));
+    setTimeout(() => {
+      el.classList.remove('toast-visible');
+      setTimeout(() => el.remove(), 250);
+    }, duration);
+  }
+};
+
+/* ---------- App Bootstrap ---------- */
+const App = {
+  init() {
+    ThemeManager.init();
+    StateManager.init();
+    StreakEngine.checkOnLoad();
+    this.bindGlobalUI();
+    Router.init();
+    EventBus.emit('app:ready');
+  },
+
+  bindGlobalUI() {
+    // Sidebar / tab nav clicks
+    document.querySelectorAll('[data-nav]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        Router.navigate(el.getAttribute('data-nav'));
+      });
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          Router.navigate(el.getAttribute('data-nav'));
+        }
+      });
+    });
+
+    // Command palette toggle
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        CommandPalette.toggle();
+      }
+      if (e.key === 'Escape') CommandPalette.close();
+    });
+
+    const paletteBtn = document.getElementById('open-palette-btn');
+    if (paletteBtn) paletteBtn.addEventListener('click', () => CommandPalette.toggle());
+
+    // Theme toggle button
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    if (themeBtn) {
+      themeBtn.addEventListener('click', () => {
+        const modes = ['light', 'dark', 'system'];
+        const next = modes[(modes.indexOf(ThemeManager.current()) + 1) % modes.length];
+        ThemeManager.apply(next);
+      });
+    }
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => App.init());
+
+
+/* ===== components.js ===== */
+/* ============================================================
+   SE-COS — components.js
+   UI Components: Dashboard, Problem Tracker, shared render helpers
+   ============================================================ */
+
+/* ---------- Shared Helpers ---------- */
+function el(tag, attrs = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') node.className = v;
+    else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
+    else if (k === 'html') node.innerHTML = v;
+    else node.setAttribute(k, v);
+  }
+  (Array.isArray(children) ? children : [children]).forEach(c => {
+    if (c == null) return;
+    node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  });
+  return node;
+}
+
+function mount(node) {
+  const root = document.getElementById('view-root');
+  root.innerHTML = '';
+  root.appendChild(node);
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function daysUntil(iso) {
+  if (!iso) return null;
+  const diff = new Date(iso).getTime() - Date.now();
+  return Math.ceil(diff / 86400000);
+}
+
+function difficultyColor(diff) {
+  return { Easy: 'badge-success', Medium: 'badge-warning', Hard: 'badge-danger' }[diff] || 'badge-muted';
+}
+
+function getAllProblems() {
+  // Merge seed metadata with user-logged state, plus any fully custom user-added problems
+  const state = StateManager.get('problems') || {};
+  const seedIds = new Set(PROBLEM_SEEDS.map(p => p.id));
+  const seeded = PROBLEM_SEEDS.map(seed => ({ ...seed, ...(state[seed.id] || {}), id: seed.id }));
+  const custom = Object.keys(state)
+    .filter(id => !seedIds.has(id) && state[id].name)
+    .map(id => ({ ...state[id], id }));
+  return [...seeded, ...custom];
+}
+
+/* ---------- Add Problem Modal ---------- */
+function openAddProblemModal() {
+  const overlay = el('div', {
+    style: 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:600; display:flex; align-items:center; justify-content:center; padding:20px',
+    onclick: (e) => { if (e.target === overlay) overlay.remove(); }
+  });
+
+  const nameInput = el('input', { type: 'text', placeholder: 'e.g. Two Sum', style: 'width:100%; margin-bottom:10px' });
+  const difficultySelect = el('select', { style: 'width:100%; margin-bottom:10px' }, ['Easy', 'Medium', 'Hard'].map(d => el('option', { value: d }, d)));
+  const topicsInput = el('input', { type: 'text', placeholder: 'arrays, hash-map (comma separated)', style: 'width:100%; margin-bottom:10px' });
+  const companiesInput = el('input', { type: 'text', placeholder: 'google, stripe (comma separated)', style: 'width:100%; margin-bottom:16px' });
+
+  const box = el('div', {
+    class: 'card', style: 'max-width:420px; width:100%; background:var(--bg-elevated)',
+    onclick: (e) => e.stopPropagation()
+  }, [
+    el('h3', { style: 'margin:0 0 14px; font-size:16px' }, 'Add Problem'),
+    el('label', { style: 'display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px' }, 'Problem name'),
+    nameInput,
+    el('label', { style: 'display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px' }, 'Difficulty'),
+    difficultySelect,
+    el('label', { style: 'display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px' }, 'Topics'),
+    topicsInput,
+    el('label', { style: 'display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px' }, 'Companies'),
+    companiesInput,
+    el('div', { style: 'display:flex; gap:8px; justify-content:flex-end' }, [
+      el('button', { class: 'btn btn-sm', onclick: () => overlay.remove() }, 'Cancel'),
+      el('button', { class: 'btn btn-sm btn-primary', onclick: () => {
+        const name = nameInput.value.trim();
+        if (!name) { Toast.show('Problem name is required', 'error'); return; }
+        const id = 'custom-' + Date.now().toString(36);
+        const topics = topicsInput.value.split(',').map(s => s.trim()).filter(Boolean);
+        const companies = companiesInput.value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+        StateManager.update(`problems.${id}`, {
+          id, name, difficulty: difficultySelect.value,
+          topics: topics.length ? topics : ['arrays'],
+          companies, status: 'unsolved', attemptCount: 0
+        });
+        Toast.show('Problem added', 'success');
+        overlay.remove();
+        renderProblems();
+      } }, 'Add Problem')
+    ])
+  ]);
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  nameInput.focus();
+}
+
+/* ---------- Dashboard View ---------- */
+function renderDashboard() {
+  const meta = StateManager.get('meta');
+  const problems = getAllProblems();
+  const solved = problems.filter(p => p.status === 'solved');
+  const dueToday = SRSEngine.getDueToday(problems);
+  const streak = StateManager.get('streak') || { current: 0, longest: 0 };
+
+  const focusAreas = ['DSA Practice', 'System Design', 'Behavioral Prep'];
+  const weekNum = Math.floor((Date.now() - new Date(meta.createdAt || Date.now()).getTime()) / (7 * 86400000));
+  const todayFocus = focusAreas[weekNum % 3];
+
+  const targetCompanies = meta.targetCompanies || [];
+  const readiness = targetCompanies.map(c => ({ id: c, name: COMPANIES_DB[c]?.name || c, score: AnalyticsEngine.companyReadiness(c) }));
+
+  const priorityResource = Object.values(RESOURCES_DB)
+    .filter(r => r.mustDo === 'must')
+    .find(r => {
+      const rs = StateManager.get(`resources.${r.id}`);
+      return !rs || rs.status !== 'completed';
+    });
+
+  const daysLeft = daysUntil(meta.targetDate);
+
+  const node = el('div', {}, [
+    el('div', { style: 'display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; flex-wrap:wrap; gap:12px' }, [
+      el('div', {}, [
+        el('h1', { style: 'font-size:22px; font-weight:600; margin:0 0 4px' }, 'Dashboard'),
+        el('p', { style: 'color:var(--text-secondary); margin:0; font-size:13px' },
+          daysLeft != null ? `${daysLeft} days until target interview date` : 'Set a target date in Settings to track countdown')
+      ]),
+      el('div', { style: 'display:flex; align-items:center; gap:8px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-md); padding:8px 14px' }, [
+        el('span', { style: 'font-size:18px' }, '🔥'),
+        el('div', {}, [
+          el('div', { style: 'font-weight:600; font-size:14px' }, `${streak.current} day streak`),
+          el('div', { style: 'font-size:11px; color:var(--text-secondary)' }, `Longest: ${streak.longest}`)
+        ])
+      ])
+    ]),
+
+    el('div', { class: 'grid grid-3', style: 'margin-bottom:14px' }, [
+      el('div', { class: 'card', style: 'grid-column: span 2; background:linear-gradient(135deg, var(--accent-soft), transparent)' }, [
+        el('div', { class: 'badge badge-accent', style: 'margin-bottom:8px' }, "Today's Focus"),
+        el('h2', { style: 'font-size:19px; margin:0 0 6px' }, todayFocus),
+        el('p', { style: 'color:var(--text-secondary); font-size:13px; margin:0 0 12px' },
+          todayFocus === 'DSA Practice' ? 'Solve 1–2 problems and clear your spaced repetition queue.' :
+          todayFocus === 'System Design' ? 'Study one system design topic in depth and write notes.' :
+          'Draft or refine one STAR story for your behavioral bank.'),
+        el('div', { style: 'display:flex; gap:8px' }, [
+          el('button', { class: 'btn btn-primary btn-sm', onclick: () => Router.navigate(
+            todayFocus === 'DSA Practice' ? 'problems' : todayFocus === 'System Design' ? 'system-design' : 'behavioral'
+          ) }, 'Start now')
+        ])
+      ]),
+      el('div', { class: 'card' }, [
+        el('div', { class: 'card-title' }, 'SR Queue'),
+        el('div', { style: 'font-size:28px; font-weight:700; color: ' + (dueToday.length ? 'var(--warning)' : 'var(--success)') }, String(dueToday.length)),
+        el('div', { style: 'font-size:12px; color:var(--text-secondary); margin-bottom:10px' }, 'due for review today'),
+        el('button', { class: 'btn btn-sm', onclick: () => Router.navigate('problems') }, 'Review now')
+      ])
+    ]),
+
+    el('div', { class: 'grid grid-2', style: 'margin-bottom:14px' }, [
+      el('div', { class: 'card' }, [
+        el('div', { class: 'card-title' }, 'Company Readiness'),
+        readiness.length === 0
+          ? el('p', { style: 'color:var(--text-secondary); font-size:13px' }, 'Select target companies in Settings to track readiness.')
+          : el('div', {}, readiness.map(r => el('div', { style: 'margin-bottom:10px' }, [
+              el('div', { style: 'display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px' }, [
+                el('span', {}, r.name), el('span', { style: 'color:var(--text-secondary)' }, `${r.score}%`)
+              ]),
+              el('div', { style: 'height:6px; background:var(--bg-sunken); border-radius:4px; overflow:hidden' }, [
+                el('div', { style: `height:100%; width:${r.score}%; background:var(--accent); border-radius:4px` })
+              ])
+            ])))
+      ]),
+      el('div', { class: 'card' }, [
+        el('div', { class: 'card-title' }, 'Priority Resource'),
+        priorityResource
+          ? el('div', {}, [
+              el('div', { style: 'font-weight:600; font-size:13.5px; margin-bottom:4px' }, priorityResource.title),
+              el('div', { style: 'font-size:12px; color:var(--text-secondary); margin-bottom:10px' }, priorityResource.description),
+              el('button', { class: 'btn btn-sm', onclick: () => Router.navigate('resources') }, 'View resource')
+            ])
+          : el('p', { style: 'color:var(--text-secondary); font-size:13px' }, "You're all caught up on must-do resources.")
+      ])
+    ]),
+
+    el('div', { class: 'grid grid-3' }, [
+      el('div', { class: 'card' }, [el('div', { style: 'font-size:11px; color:var(--text-secondary)' }, 'Problems Solved'), el('div', { style: 'font-size:22px; font-weight:700' }, String(solved.length))]),
+      el('div', { class: 'card' }, [el('div', { style: 'font-size:11px; color:var(--text-secondary)' }, 'Current Level'), el('div', { style: 'font-size:18px; font-weight:700' }, meta.currentLevel || '—')]),
+      el('div', { class: 'card' }, [el('div', { style: 'font-size:11px; color:var(--text-secondary)' }, 'Target Date'), el('div', { style: 'font-size:16px; font-weight:700' }, fmtDate(meta.targetDate))])
+    ])
+  ]);
+
+  mount(node);
+}
+
+/* ---------- Problem Tracker View ---------- */
+const ProblemsViewState = { filterStatus: 'all', filterTopic: 'all', filterCompany: 'all', search: '', tab: 'all' };
+
+function renderProblems() {
+  const all = getAllProblems();
+  const dueToday = SRSEngine.getDueToday(all);
+
+  function filteredList() {
+    return (ProblemsViewState.tab === 'review' ? SRSEngine.getDueToday(getAllProblems()) : getAllProblems()).filter(p => {
+      if (ProblemsViewState.filterStatus !== 'all' && (p.status || 'unsolved') !== ProblemsViewState.filterStatus) return false;
+      if (ProblemsViewState.filterTopic !== 'all' && !p.topics.includes(ProblemsViewState.filterTopic)) return false;
+      if (ProblemsViewState.filterCompany !== 'all' && !p.companies.includes(ProblemsViewState.filterCompany)) return false;
+      if (ProblemsViewState.search && !p.name.toLowerCase().includes(ProblemsViewState.search.toLowerCase())) return false;
+      return true;
+    });
+  }
+
+  const filtered = filteredList();
+
+  const node = el('div', {}, [
+    el('div', { style: 'display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px' }, [
+      el('h1', { style: 'font-size:22px; font-weight:600; margin:0' }, 'Problem Tracker'),
+      el('button', { class: 'btn btn-primary btn-sm', onclick: openAddProblemModal }, '+ Add Problem')
+    ]),
+
+    el('div', { style: 'display:flex; gap:8px; margin-bottom:14px' }, [
+      el('button', { class: 'btn btn-sm' + (ProblemsViewState.tab === 'all' ? ' btn-primary' : ''), onclick: () => { ProblemsViewState.tab = 'all'; renderProblems(); } }, 'All Problems'),
+      el('button', { class: 'btn btn-sm' + (ProblemsViewState.tab === 'review' ? ' btn-primary' : ''), onclick: () => { ProblemsViewState.tab = 'review'; renderProblems(); } }, `Due for Review (${dueToday.length})`)
+    ]),
+
+    el('div', { class: 'card', style: 'margin-bottom:14px' }, [
+      el('div', { style: 'display:flex; gap:10px; flex-wrap:wrap' }, [
+        el('input', { type: 'text', placeholder: 'Search problems...', value: ProblemsViewState.search,
+          oninput: (e) => { ProblemsViewState.search = e.target.value; renderProblemListInto(filteredList()); },
+          style: 'flex:1; min-width:180px' }),
+        selectFilter('Status', ['all', 'unsolved', 'attempted', 'solved', 'review'], ProblemsViewState.filterStatus, v => { ProblemsViewState.filterStatus = v; renderProblems(); }),
+        selectFilter('Topic', ['all', ...DSA_TOPICS], ProblemsViewState.filterTopic, v => { ProblemsViewState.filterTopic = v; renderProblems(); }),
+        selectFilter('Company', ['all', ...COMPANY_LIST], ProblemsViewState.filterCompany, v => { ProblemsViewState.filterCompany = v; renderProblems(); })
+      ])
+    ]),
+
+    el('div', { id: 'problem-list-container' }, [renderProblemListTable(filtered)])
+  ]);
+
+  function renderProblemListInto(list) {
+    const container = document.getElementById('problem-list-container');
+    if (container) { container.innerHTML = ''; container.appendChild(renderProblemListTable(list)); }
+  }
+
+  mount(node);
+}
+
+function selectFilter(label, options, current, onChange) {
+  return el('select', { onchange: (e) => onChange(e.target.value), 'aria-label': label }, options.map(o =>
+    el('option', { value: o, ...(o === current ? { selected: 'selected' } : {}) }, o === 'all' ? `All ${label}` : o)
+  ));
+}
+
+function renderProblemListTable(list) {
+  const reviewMode = ProblemsViewState.tab === 'review';
+  if (list.length === 0) {
+    return el('div', { class: 'card' }, el('p', { style: 'color:var(--text-secondary); text-align:center; margin:0; padding:20px 0' },
+      reviewMode ? 'Nothing due for review. Nice work staying on top of it.' : 'No problems match your filters.'));
+  }
+  // Virtualization: render first 50 rows; remaining loaded via "Load more".
+  const visible = list.slice(0, 50);
+  return el('div', { class: 'card', style: 'padding:0; overflow-x:auto' }, [
+    el('table', { style: 'width:100%; border-collapse:collapse; font-size:13px' }, [
+      el('thead', {}, el('tr', {}, ['Status', 'Problem', 'Difficulty', 'Topics', 'Next Review', reviewMode ? 'Rate Review' : ''].map(h =>
+        el('th', { style: 'text-align:left; padding:10px 14px; font-size:11px; color:var(--text-secondary); border-bottom:1px solid var(--border)' }, h)
+      ))),
+      el('tbody', {}, visible.map(p => el('tr', { style: 'border-bottom:1px solid var(--border)' }, [
+        el('td', { style: 'padding:10px 14px' }, el('span', { class: 'badge ' + statusBadgeClass(p.status) }, p.status || 'unsolved')),
+        el('td', { style: 'padding:10px 14px; font-weight:500' }, p.name),
+        el('td', { style: 'padding:10px 14px' }, el('span', { class: 'badge ' + difficultyColor(p.difficulty) }, p.difficulty)),
+        el('td', { style: 'padding:10px 14px; color:var(--text-secondary); font-size:12px' }, p.topics.slice(0, 2).join(', ')),
+        el('td', { style: 'padding:10px 14px; font-size:12px; color:var(--text-secondary)' }, p.nextReview ? fmtDate(p.nextReview) : '—'),
+        el('td', { style: 'padding:10px 14px' },
+          reviewMode
+            ? el('div', { style: 'display:flex; gap:4px' }, [
+                el('button', { class: 'btn btn-sm', style: 'background:var(--danger-soft); color:var(--danger); border-color:transparent', onclick: () => rateAndRefresh(p.id, 'hard') }, 'Hard'),
+                el('button', { class: 'btn btn-sm', style: 'background:var(--warning-soft); color:var(--warning); border-color:transparent', onclick: () => rateAndRefresh(p.id, 'medium') }, 'Medium'),
+                el('button', { class: 'btn btn-sm', style: 'background:var(--success-soft); color:var(--success); border-color:transparent', onclick: () => rateAndRefresh(p.id, 'easy') }, 'Easy')
+              ])
+            : el('button', { class: 'btn btn-sm', onclick: () => markSolved(p.id) }, p.status === 'solved' ? 'Log review' : 'Mark Solved'))
+      ])))
+    ])
+  ]);
+}
+
+function rateAndRefresh(id, rating) {
+  SRSEngine.rateReview(id, rating);
+  StreakEngine.logActivity();
+  Toast.show('Review logged', 'success');
+  renderProblems();
+}
+
+function statusBadgeClass(status) {
+  return { solved: 'badge-success', attempted: 'badge-warning', review: 'badge-accent' }[status] || 'badge-muted';
+}
+
+function markSolved(id) {
+  const now = new Date().toISOString();
+  const existing = StateManager.get(`problems.${id}`) || {};
+  const interval = SRSEngine.nextInterval(existing.reviewInterval || 0, 'medium');
+  StateManager.update(`problems.${id}`, {
+    ...existing,
+    id,
+    status: 'solved',
+    solvedAt: now,
+    reviewInterval: interval,
+    nextReview: SRSEngine.addDays(now, interval),
+    attemptCount: (existing.attemptCount || 0) + 1
+  });
+  StreakEngine.logActivity();
+  Toast.show('Problem marked solved', 'success');
+  renderProblems();
+}
+
+
+/* ===== analytics.js ===== */
+/* ============================================================
+   SE-COS — analytics.js
+   Analytics Engine + View: readiness scoring, canvas charts
+   ============================================================ */
+
+const AnalyticsEngine = {
+  companyReadiness(companyId) {
+    const company = COMPANIES_DB[companyId];
+    if (!company) return 0;
+
+    // Checklist completion (50% weight)
+    const checklistState = StateManager.get(`companies.${companyId}.checklistProgress`) || {};
+    const totalItems = company.checklist.length;
+    const doneItems = company.checklist.filter(item => checklistState[item.id]).length;
+    const checklistScore = totalItems ? (doneItems / totalItems) : 0;
+
+    // Problem coverage tagged to this company (30% weight)
+    const problems = getAllProblems().filter(p => p.companies.includes(companyId));
+    const solvedForCompany = problems.filter(p => p.status === 'solved').length;
+    const problemScore = problems.length ? Math.min(1, solvedForCompany / Math.max(5, problems.length * 0.6)) : 0;
+
+    // System design coverage relevant to this company (20% weight)
+    const relevantTopics = SYSTEM_DESIGN_TOPICS.filter(t => t.companies.includes(companyId));
+    const sdState = StateManager.get('systemDesign') || {};
+    const masteredTopics = relevantTopics.filter(t => sdState[t.id]?.status === 'mastered').length;
+    const sdScore = relevantTopics.length ? (masteredTopics / relevantTopics.length) : 0;
+
+    const total = (checklistScore * 0.5) + (problemScore * 0.3) + (sdScore * 0.2);
+    return Math.round(total * 100);
+  },
+
+  topicCoverage() {
+    const problems = getAllProblems();
+    const coverage = {};
+    DSA_TOPICS.forEach(topic => {
+      const topicProblems = problems.filter(p => p.topics.includes(topic));
+      const solved = topicProblems.filter(p => p.status === 'solved').length;
+      coverage[topic] = topicProblems.length ? Math.round((solved / topicProblems.length) * 100) : 0;
+    });
+    return coverage;
+  },
+
+  difficultyDistribution() {
+    const problems = getAllProblems().filter(p => p.status === 'solved');
+    return {
+      Easy: problems.filter(p => p.difficulty === 'Easy').length,
+      Medium: problems.filter(p => p.difficulty === 'Medium').length,
+      Hard: problems.filter(p => p.difficulty === 'Hard').length
+    };
+  },
+
+  activityHeatmapData() {
+    const history = StateManager.get('streak.history') || {};
+    return history; // { 'YYYY-MM-DD': count }
+  },
+
+  srQueueHealth() {
+    const problems = getAllProblems();
+    const now = Date.now();
+    let due = 0, overdue = 0, upcoming = 0;
+    problems.forEach(p => {
+      if (!p.nextReview) return;
+      const t = new Date(p.nextReview).getTime();
+      const diffDays = (t - now) / 86400000;
+      if (diffDays < 0) overdue++;
+      else if (diffDays <= 1) due++;
+      else if (diffDays <= 7) upcoming++;
+    });
+    return { due, overdue, upcoming };
+  }
+};
+
+/* ---------- Canvas Chart Helpers ---------- */
+function drawBarChart(canvas, data, opts = {}) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const labels = Object.keys(data);
+  const values = Object.values(data);
+  const max = Math.max(1, ...values);
+  const barWidth = W / labels.length * 0.6;
+  const gap = W / labels.length * 0.4;
+  const styles = getComputedStyle(document.documentElement);
+  const color = opts.color || styles.getPropertyValue('--accent').trim();
+  const textColor = styles.getPropertyValue('--text-secondary').trim();
+
+  labels.forEach((label, i) => {
+    const x = i * (barWidth + gap) + gap / 2;
+    const barH = (values[i] / max) * (H - 30);
+    ctx.fillStyle = color;
+    ctx.fillRect(x, H - barH - 18, barWidth, barH);
+    ctx.fillStyle = textColor;
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(String(values[i]), x + barWidth / 2, H - barH - 22);
+    ctx.fillText(label.slice(0, 4), x + barWidth / 2, H - 4);
+  });
+}
+
+function drawRadarChart(canvas, data) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const cx = W / 2, cy = H / 2, radius = Math.min(W, H) / 2 - 24;
+  const labels = Object.keys(data);
+  const values = Object.values(data);
+  const n = labels.length;
+  const styles = getComputedStyle(document.documentElement);
+  const gridColor = styles.getPropertyValue('--border').trim();
+  const accent = styles.getPropertyValue('--accent').trim();
+  const textColor = styles.getPropertyValue('--text-secondary').trim();
+
+  // Grid rings
+  for (let ring = 1; ring <= 4; ring++) {
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+      const r = radius * (ring / 4);
+      const x = cx + r * Math.cos(angle), y = cy + r * Math.sin(angle);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = gridColor;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Data polygon
+  ctx.beginPath();
+  labels.forEach((label, i) => {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const r = radius * (values[i] / 100);
+    const x = cx + r * Math.cos(angle), y = cy + r * Math.sin(angle);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = accent + '33';
+  ctx.fill();
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Labels
+  ctx.font = '9px sans-serif';
+  ctx.fillStyle = textColor;
+  ctx.textAlign = 'center';
+  labels.forEach((label, i) => {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const x = cx + (radius + 14) * Math.cos(angle), y = cy + (radius + 14) * Math.sin(angle);
+    ctx.fillText(label.slice(0, 6), x, y);
+  });
+}
+
+function drawHeatmap(canvas, historyData) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const cellSize = 11, gap = 2;
+  const weeks = 26;
+  const styles = getComputedStyle(document.documentElement);
+  const sunken = styles.getPropertyValue('--bg-sunken').trim();
+  const success = styles.getPropertyValue('--success').trim();
+
+  const today = new Date();
+  for (let w = 0; w < weeks; w++) {
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - ((weeks - w) * 7 - d));
+      const key = date.toISOString().slice(0, 10);
+      const count = historyData[key] || 0;
+      ctx.fillStyle = count === 0 ? sunken : success;
+      ctx.globalAlpha = count === 0 ? 1 : Math.min(1, 0.3 + count * 0.2);
+      ctx.fillRect(w * (cellSize + gap), d * (cellSize + gap), cellSize, cellSize);
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
+/* ---------- Analytics View ---------- */
+function renderAnalytics() {
+  const coverage = AnalyticsEngine.topicCoverage();
+  const topTopics = Object.fromEntries(Object.entries(coverage).sort((a, b) => b[1] - a[1]).slice(0, 8));
+  const diffDist = AnalyticsEngine.difficultyDistribution();
+  const srHealth = AnalyticsEngine.srQueueHealth();
+  const history = AnalyticsEngine.activityHeatmapData();
+  const meta = StateManager.get('meta');
+
+  const node = el('div', {}, [
+    el('h1', { style: 'font-size:22px; font-weight:600; margin:0 0 18px' }, 'Analytics'),
+
+    el('div', { class: 'card', style: 'margin-bottom:14px' }, [
+      el('div', { class: 'card-title' }, 'Activity (last 26 weeks)'),
+      el('canvas', { id: 'heatmap-canvas', width: '380', height: '92', style: 'max-width:100%' })
+    ]),
+
+    el('div', { class: 'grid grid-2', style: 'margin-bottom:14px' }, [
+      el('div', { class: 'card' }, [
+        el('div', { class: 'card-title' }, 'Topic Coverage (top 8)'),
+        el('canvas', { id: 'radar-canvas', width: '320', height: '260', style: 'max-width:100%' })
+      ]),
+      el('div', { class: 'card' }, [
+        el('div', { class: 'card-title' }, 'Difficulty Distribution (solved)'),
+        el('canvas', { id: 'bar-canvas', width: '320', height: '200', style: 'max-width:100%' })
+      ])
+    ]),
+
+    el('div', { class: 'grid grid-2' }, [
+      el('div', { class: 'card' }, [
+        el('div', { class: 'card-title' }, 'Company Readiness'),
+        el('div', {}, (meta.targetCompanies || []).map(c => {
+          const score = AnalyticsEngine.companyReadiness(c);
+          return el('div', { style: 'display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px' }, [
+            el('span', {}, COMPANIES_DB[c]?.name || c),
+            el('span', { class: 'badge ' + (score >= 70 ? 'badge-success' : score >= 40 ? 'badge-warning' : 'badge-danger') }, `${score}%`)
+          ]);
+        }))
+      ]),
+      el('div', { class: 'card' }, [
+        el('div', { class: 'card-title' }, 'SR Queue Health'),
+        el('div', { class: 'grid grid-3' }, [
+          el('div', {}, [el('div', { style: 'font-size:20px; font-weight:700; color:var(--danger)' }, String(srHealth.overdue)), el('div', { style: 'font-size:11px; color:var(--text-secondary)' }, 'Overdue')]),
+          el('div', {}, [el('div', { style: 'font-size:20px; font-weight:700; color:var(--warning)' }, String(srHealth.due)), el('div', { style: 'font-size:11px; color:var(--text-secondary)' }, 'Due today')]),
+          el('div', {}, [el('div', { style: 'font-size:20px; font-weight:700; color:var(--success)' }, String(srHealth.upcoming)), el('div', { style: 'font-size:11px; color:var(--text-secondary)' }, 'Upcoming')])
+        ])
+      ])
+    ])
+  ]);
+
+  mount(node);
+
+  requestAnimationFrame(() => {
+    const heatCanvas = document.getElementById('heatmap-canvas');
+    if (heatCanvas) drawHeatmap(heatCanvas, history);
+    const radarCanvas = document.getElementById('radar-canvas');
+    if (radarCanvas) drawRadarChart(radarCanvas, topTopics);
+    const barCanvas = document.getElementById('bar-canvas');
+    if (barCanvas) drawBarChart(barCanvas, diffDist);
+  });
+}
+
+
+/* ===== companies.js ===== */
+/* ============================================================
+   SE-COS — companies.js
+   Company Intelligence Pages: selector grid + detail pages
+   ============================================================ */
+
+const CompaniesViewState = { selected: null };
+
+function renderCompanies() {
+  if (CompaniesViewState.selected) {
+    return renderCompanyDetail(CompaniesViewState.selected);
+  }
+
+  const meta = StateManager.get('meta');
+  const targetSet = new Set(meta.targetCompanies || []);
+
+  const node = el('div', {}, [
+    el('h1', { style: 'font-size:22px; font-weight:600; margin:0 0 4px' }, 'Company Intelligence'),
+    el('p', { style: 'color:var(--text-secondary); font-size:13px; margin:0 0 18px' }, 'Interview process, expectations, and prep checklists for 10 target companies.'),
+    el('div', { class: 'grid grid-3' }, COMPANY_LIST.map(id => {
+      const company = COMPANIES_DB[id];
+      const score = AnalyticsEngine.companyReadiness(id);
+      const isTarget = targetSet.has(id);
+      return el('div', {
+        class: 'card', style: 'cursor:pointer;' + (isTarget ? ' border-color:var(--accent)' : ''),
+        onclick: () => { CompaniesViewState.selected = id; renderCompanies(); }
+      }, [
+        el('div', { style: 'display:flex; justify-content:space-between; align-items:start; margin-bottom:8px' }, [
+          el('div', { style: 'font-weight:600; font-size:15px' }, company.name),
+          isTarget ? el('span', { class: 'badge badge-accent' }, 'Target') : null
+        ]),
+        el('div', { style: 'font-size:11px; color:var(--text-secondary); margin-bottom:10px' }, `Bar: ${company.hiringBar}`),
+        el('div', { style: 'height:6px; background:var(--bg-sunken); border-radius:4px; overflow:hidden; margin-bottom:4px' }, [
+          el('div', { style: `height:100%; width:${score}%; background:var(--accent)` })
+        ]),
+        el('div', { style: 'font-size:11px; color:var(--text-secondary)' }, `${score}% ready`)
+      ]);
+    }))
+  ]);
+
+  mount(node);
+}
+
+function renderCompanyDetail(companyId) {
+  const company = COMPANIES_DB[companyId];
+  const checklistState = StateManager.get(`companies.${companyId}.checklistProgress`) || {};
+  const score = AnalyticsEngine.companyReadiness(companyId);
+
+  const node = el('div', {}, [
+    el('button', { class: 'btn btn-sm', style: 'margin-bottom:14px', onclick: () => { CompaniesViewState.selected = null; renderCompanies(); } }, '← All companies'),
+
+    el('div', { style: 'display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; flex-wrap:wrap; gap:10px' }, [
+      el('div', {}, [
+        el('h1', { style: 'font-size:22px; font-weight:600; margin:0 0 4px' }, company.name),
+        el('div', { style: 'display:flex; gap:6px' }, [
+          el('span', { class: 'badge badge-danger' }, `Difficulty: ${company.difficultyRating}`),
+          el('span', { class: 'badge badge-warning' }, `Bar: ${company.hiringBar}`)
+        ])
+      ]),
+      el('div', { class: 'card', style: 'text-align:center; padding:10px 18px' }, [
+        el('div', { style: 'font-size:24px; font-weight:700; color:var(--accent)' }, `${score}%`),
+        el('div', { style: 'font-size:11px; color:var(--text-secondary)' }, 'Readiness')
+      ])
+    ]),
+
+    el('div', { class: 'grid grid-2', style: 'margin-bottom:14px' }, [
+      el('div', { class: 'card' }, [
+        el('div', { class: 'card-title' }, 'Interview Process'),
+        el('div', {}, company.process.map((step, i) => el('div', { style: 'display:flex; gap:8px; margin-bottom:8px; font-size:13px' }, [
+          el('span', { style: 'min-width:20px; height:20px; background:var(--accent-soft); color:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600' }, String(i + 1)),
+          el('span', {}, step)
+        ])))
+      ]),
+      el('div', { class: 'card' }, [
+        el('div', { class: 'card-title' }, 'Compensation Bands'),
+        el('table', { style: 'width:100%; font-size:12.5px; border-collapse:collapse' }, [
+          el('thead', {}, el('tr', {}, ['Level', 'Title', 'Total Comp'].map(h => el('th', { style: 'text-align:left; padding:5px 4px; color:var(--text-secondary); font-size:11px; border-bottom:1px solid var(--border)' }, h)))),
+          el('tbody', {}, company.compBands.map(b => el('tr', {}, [
+            el('td', { style: 'padding:5px 4px; border-bottom:1px solid var(--border)' }, b.level),
+            el('td', { style: 'padding:5px 4px; border-bottom:1px solid var(--border)' }, b.title),
+            el('td', { style: 'padding:5px 4px; border-bottom:1px solid var(--border); font-weight:500' }, b.range)
+          ])))
+        ])
+      ])
+    ]),
+
+    el('div', { class: 'grid grid-2', style: 'margin-bottom:14px' }, [
+      el('div', { class: 'card' }, [el('div', { class: 'card-title' }, 'DSA Expectations'), el('p', { style: 'font-size:13px; color:var(--text-secondary); margin:0' }, company.dsaExpectations)]),
+      el('div', { class: 'card' }, [el('div', { class: 'card-title' }, 'System Design Expectations'), el('p', { style: 'font-size:13px; color:var(--text-secondary); margin:0' }, company.systemDesignExpectations)])
+    ]),
+
+    el('div', { class: 'card', style: 'margin-bottom:14px' }, [
+      el('div', { class: 'card-title' }, 'Behavioral Expectations'),
+      el('p', { style: 'font-size:13px; color:var(--text-secondary); margin:0' }, company.behavioralExpectations)
+    ]),
+
+    el('div', { class: 'card', style: 'margin-bottom:14px' }, [
+      el('div', { class: 'card-title' }, 'Preparation Roadmap'),
+      el('p', { style: 'font-size:13px; color:var(--text-secondary); margin:0' }, company.prepRoadmap)
+    ]),
+
+    el('div', { class: 'card' }, [
+      el('div', { class: 'card-title' }, 'Prep Checklist'),
+      el('div', {}, company.checklist.map(item => {
+        const checked = !!checklistState[item.id];
+        return el('label', { style: 'display:flex; align-items:center; gap:10px; padding:7px 0; font-size:13px; cursor:pointer; border-bottom:1px solid var(--border)' }, [
+          el('input', {
+            type: 'checkbox', ...(checked ? { checked: 'checked' } : {}),
+            onchange: (e) => {
+              const updated = { ...checklistState, [item.id]: e.target.checked };
+              StateManager.update(`companies.${companyId}.checklistProgress`, updated);
+              renderCompanies();
+            }
+          }),
+          el('span', { style: checked ? 'text-decoration:line-through; color:var(--text-tertiary)' : '' }, item.label)
+        ]);
+      }))
+    ])
+  ]);
+
+  mount(node);
+}
+
+
+/* ===== resources.js ===== */
+/* ============================================================
+   SE-COS — resources.js
+   Resource Library + System Design Tracker + Behavioral Bank
+   ============================================================ */
+
+/* ---------- Resource Library ---------- */
+const ResourcesViewState = { category: 'all' };
+const RESOURCE_CATEGORIES = ['book', 'leetcode_list', 'course', 'youtube', 'blog', 'mock_platform', 'podcast', 'networking', 'resume', 'system_design_resource'];
+const CATEGORY_LABELS = {
+  book: 'Books', leetcode_list: 'LeetCode Lists', course: 'Courses', youtube: 'YouTube',
+  blog: 'Blogs', mock_platform: 'Mock Platforms', podcast: 'Podcasts', networking: 'Networking',
+  resume: 'Resume', system_design_resource: 'System Design'
+};
+
+function renderResources() {
+  const resources = Object.values(RESOURCES_DB);
+  const filtered = ResourcesViewState.category === 'all' ? resources : resources.filter(r => r.category === ResourcesViewState.category);
+  const sorted = filtered.sort((a, b) => a.priority - b.priority);
+
+  const node = el('div', {}, [
+    el('h1', { style: 'font-size:22px; font-weight:600; margin:0 0 14px' }, 'Resource Library'),
+
+    el('div', { style: 'display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px' }, [
+      el('button', { class: 'btn btn-sm' + (ResourcesViewState.category === 'all' ? ' btn-primary' : ''), onclick: () => { ResourcesViewState.category = 'all'; renderResources(); } }, 'All'),
+      ...RESOURCE_CATEGORIES.map(cat => el('button', {
+        class: 'btn btn-sm' + (ResourcesViewState.category === cat ? ' btn-primary' : ''),
+        onclick: () => { ResourcesViewState.category = cat; renderResources(); }
+      }, CATEGORY_LABELS[cat]))
+    ]),
+
+    el('div', { class: 'grid grid-2' }, sorted.map(r => {
+      const rs = StateManager.get(`resources.${r.id}`) || { status: 'not_started' };
+      return el('div', { class: 'card' }, [
+        el('div', { style: 'display:flex; justify-content:space-between; align-items:start; gap:8px; margin-bottom:6px' }, [
+          el('div', { style: 'font-weight:600; font-size:13.5px' }, r.title),
+          el('span', { class: 'badge ' + (r.mustDo === 'must' ? 'badge-danger' : r.mustDo === 'nice' ? 'badge-warning' : 'badge-muted') }, r.mustDo === 'must' ? 'Must Do' : r.mustDo === 'nice' ? 'Nice to Have' : 'Optional')
+        ]),
+        el('div', { style: 'font-size:12px; color:var(--text-secondary); margin-bottom:8px' }, r.description),
+        el('div', { style: 'display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap' }, [
+          el('span', { class: 'badge badge-muted' }, '★'.repeat(r.roi)),
+          el('span', { class: 'badge badge-muted' }, r.difficulty),
+          r.estimatedHours ? el('span', { class: 'badge badge-muted' }, `${r.estimatedHours}h`) : null
+        ]),
+        el('select', {
+          value: rs.status,
+          onchange: (e) => {
+            StateManager.update(`resources.${r.id}`, { ...rs, status: e.target.value, completedAt: e.target.value === 'completed' ? new Date().toISOString() : rs.completedAt });
+            renderResources();
+          }
+        }, ['not_started', 'in_progress', 'completed', 'skipped'].map(s => el('option', { value: s, ...(s === rs.status ? { selected: 'selected' } : {}) }, s.replace('_', ' '))))
+      ]);
+    }))
+  ]);
+
+  mount(node);
+}
+
+/* ---------- System Design Tracker ---------- */
+function renderSystemDesign() {
+  const sdState = StateManager.get('systemDesign') || {};
+  const byCategory = {};
+  SYSTEM_DESIGN_TOPICS.forEach(t => { (byCategory[t.category] = byCategory[t.category] || []).push(t); });
+
+  const node = el('div', {}, [
+    el('h1', { style: 'font-size:22px; font-weight:600; margin:0 0 14px' }, 'System Design Tracker'),
+    ...Object.entries(byCategory).map(([cat, topics]) => el('div', { style: 'margin-bottom:18px' }, [
+      el('h3', { style: 'font-size:14px; font-weight:600; color:var(--text-secondary); margin:0 0 8px' }, cat),
+      el('div', { class: 'grid grid-3' }, topics.map(t => {
+        const ts = sdState[t.id] || { status: 'not_started' };
+        return el('div', { class: 'card' }, [
+          el('div', { style: 'font-weight:600; font-size:13px; margin-bottom:8px' }, t.name),
+          el('select', {
+            value: ts.status,
+            onchange: (e) => { StateManager.update(`systemDesign.${t.id}`, { ...ts, status: e.target.value, lastStudied: new Date().toISOString() }); renderSystemDesign(); }
+          }, ['not_started', 'in_progress', 'mastered'].map(s => el('option', { value: s, ...(s === ts.status ? { selected: 'selected' } : {}) }, s.replace('_', ' '))))
+        ]);
+      }))
+    ]))
+  ]);
+
+  mount(node);
+}
+
+/* ---------- Behavioral Bank ---------- */
+function renderBehavioral() {
+  const behState = StateManager.get('behavioral') || {};
+
+  const node = el('div', {}, [
+    el('h1', { style: 'font-size:22px; font-weight:600; margin:0 0 14px' }, 'Behavioral Bank'),
+    el('div', {}, BEHAVIORAL_QUESTIONS.map(q => {
+      const entry = behState[q.id] || {};
+      return el('div', { class: 'card', style: 'margin-bottom:12px' }, [
+        el('div', { style: 'font-weight:600; font-size:13.5px; margin-bottom:4px' }, q.question),
+        el('div', { style: 'display:flex; gap:4px; margin-bottom:10px' }, q.competencies.map(c => el('span', { class: 'badge badge-accent' }, c))),
+        el('div', { class: 'grid grid-2' }, [
+          starField('Situation', q.id, 'situation', entry.situation),
+          starField('Task', q.id, 'task', entry.task),
+          starField('Action', q.id, 'action', entry.action),
+          starField('Result', q.id, 'result', entry.result)
+        ])
+      ]);
+    }))
+  ]);
+
+  mount(node);
+}
+
+function starField(label, qId, field, value) {
+  return el('div', {}, [
+    el('label', { style: 'font-size:11px; color:var(--text-secondary); display:block; margin-bottom:4px' }, label),
+    el('textarea', {
+      rows: '3', style: 'width:100%; resize:vertical; font-size:12.5px',
+      oninput: (e) => {
+        const current = StateManager.get(`behavioral.${qId}`) || {};
+        StateManager.update(`behavioral.${qId}`, { ...current, [field]: Validator.sanitizeNote(e.target.value), updatedAt: new Date().toISOString() });
+      }
+    }, value || '')
+  ]);
+}
+
+
+/* ===== roadmap.js ===== */
+/* ============================================================
+   SE-COS — roadmap.js
+   Roadmap & Milestones + Mock Interview Timer + Settings
+   ============================================================ */
+
+/* ---------- Roadmap ---------- */
+function generateRoadmapPhases(meta) {
+  const phases = [
+    { name: 'Foundations', weeks: '1–3', desc: 'Core DSA patterns via NeetCode 150 and Grokking Patterns course.' },
+    { name: 'Core DSA Mastery', weeks: '4–8', desc: 'Complete Blind 75, drill weak topics, start daily SR reviews.' },
+    { name: 'System Design Fundamentals', weeks: '9–13', desc: 'System Design Primer + Grokking SD course + Alex Xu Vol 1.' },
+    { name: 'Company-Specific Prep', weeks: '14–18', desc: 'Company-tagged problems, target-company SD topics, checklist completion.' },
+    { name: 'Behavioral & Mock Ramp-Up', weeks: '19–22', desc: 'STAR story bank, weekly mock interviews on Pramp/Interviewing.io.' },
+    { name: 'Final Polish', weeks: '23–24', desc: 'Company-specific mocks, comp research, resume final pass.' }
+  ];
+  return phases;
+}
+
+function renderRoadmap() {
+  const meta = StateManager.get('meta');
+  const phases = generateRoadmapPhases(meta);
+  const daysLeft = daysUntil(meta.targetDate);
+  const milestoneState = StateManager.get('roadmapMilestones') || {};
+
+  const node = el('div', {}, [
+    el('h1', { style: 'font-size:22px; font-weight:600; margin:0 0 4px' }, 'Roadmap'),
+    el('p', { style: 'color:var(--text-secondary); font-size:13px; margin:0 0 18px' },
+      daysLeft != null ? `${daysLeft} days remaining until your target date (${fmtDate(meta.targetDate)})` : 'Set a target date in Settings to generate a personalized timeline.'),
+
+    el('div', {}, phases.map((phase, i) => {
+      const key = `phase-${i}`;
+      const done = !!milestoneState[key];
+      return el('div', { class: 'card', style: 'margin-bottom:10px; display:flex; gap:14px; align-items:flex-start' }, [
+        el('input', {
+          type: 'checkbox', style: 'margin-top:3px', ...(done ? { checked: 'checked' } : {}),
+          onchange: (e) => { StateManager.update(`roadmapMilestones.${key}`, e.target.checked); renderRoadmap(); }
+        }),
+        el('div', { style: done ? 'opacity:0.55' : '' }, [
+          el('div', { style: 'display:flex; gap:8px; align-items:center; margin-bottom:4px' }, [
+            el('span', { style: 'font-weight:600; font-size:14px' }, phase.name),
+            el('span', { class: 'badge badge-muted' }, `Weeks ${phase.weeks}`)
+          ]),
+          el('p', { style: 'font-size:13px; color:var(--text-secondary); margin:0' }, phase.desc)
+        ])
+      ]);
+    }))
+  ]);
+
+  mount(node);
+}
+
+/* ---------- Mock Interview Timer ---------- */
+const MockTimerState = { mode: 'dsa', running: false, secondsLeft: 45 * 60, intervalId: null, notes: '' };
+
+function renderMock() {
+  const meta = StateManager.get('meta');
+  const sessions = (StateManager.get('sessions') || []).filter(s => s.type === 'mock').slice(-10).reverse();
+
+  const node = el('div', {}, [
+    el('h1', { style: 'font-size:22px; font-weight:600; margin:0 0 14px' }, 'Mock Interview'),
+
+    el('div', { class: 'card', style: 'margin-bottom:14px' }, [
+      el('div', { style: 'display:flex; gap:8px; margin-bottom:14px' }, ['dsa', 'system-design', 'behavioral'].map(m =>
+        el('button', { class: 'btn btn-sm' + (MockTimerState.mode === m ? ' btn-primary' : ''), onclick: () => { MockTimerState.mode = m; renderMock(); } }, m.replace('-', ' '))
+      )),
+      el('div', { style: 'text-align:center; padding:20px 0' }, [
+        el('div', { id: 'timer-display', style: 'font-size:48px; font-weight:700; font-family:var(--font-mono)' }, formatTime(MockTimerState.secondsLeft)),
+        el('div', { style: 'display:flex; gap:8px; justify-content:center; margin-top:14px' }, [
+          el('button', { class: 'btn btn-primary', onclick: toggleMockTimer }, MockTimerState.running ? 'Pause' : 'Start'),
+          el('button', { class: 'btn', onclick: resetMockTimer }, 'Reset')
+        ])
+      ]),
+      el('textarea', {
+        rows: '4', placeholder: 'Session notes...', style: 'width:100%; font-size:13px',
+        oninput: (e) => { MockTimerState.notes = e.target.value; }
+      }, MockTimerState.notes),
+      el('div', { style: 'margin-top:10px; display:flex; justify-content:flex-end' }, [
+        el('button', { class: 'btn btn-sm', onclick: completeMockSession }, 'Log session')
+      ])
+    ]),
+
+    el('div', { class: 'card' }, [
+      el('div', { class: 'card-title' }, 'Recent Sessions'),
+      sessions.length === 0
+        ? el('p', { style: 'color:var(--text-secondary); font-size:13px' }, 'No mock sessions logged yet.')
+        : el('div', {}, sessions.map(s => el('div', { style: 'display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:12.5px' }, [
+            el('span', {}, fmtDate(s.date)), el('span', { class: 'badge badge-muted' }, `${s.durationMinutes}min`)
+          ])))
+    ])
+  ]);
+
+  mount(node);
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function toggleMockTimer() {
+  if (MockTimerState.running) {
+    clearInterval(MockTimerState.intervalId);
+    MockTimerState.running = false;
+  } else {
+    MockTimerState.running = true;
+    MockTimerState.intervalId = setInterval(() => {
+      MockTimerState.secondsLeft = Math.max(0, MockTimerState.secondsLeft - 1);
+      const display = document.getElementById('timer-display');
+      if (display) display.textContent = formatTime(MockTimerState.secondsLeft);
+      if (MockTimerState.secondsLeft === 0) { clearInterval(MockTimerState.intervalId); MockTimerState.running = false; Toast.show('Time is up', 'info'); }
+    }, 1000);
+  }
+  renderMock();
+}
+
+function resetMockTimer() {
+  clearInterval(MockTimerState.intervalId);
+  MockTimerState.running = false;
+  MockTimerState.secondsLeft = 45 * 60;
+  renderMock();
+}
+
+function completeMockSession() {
+  const sessions = StateManager.get('sessions') || [];
+  const elapsedMinutes = Math.round((45 * 60 - MockTimerState.secondsLeft) / 60);
+  sessions.push({ date: new Date().toISOString(), type: 'mock', durationMinutes: elapsedMinutes || 1, notes: Validator.sanitizeNote(MockTimerState.notes) });
+  StateManager.update('sessions', sessions);
+  StreakEngine.logActivity();
+  Toast.show('Session logged', 'success');
+  resetMockTimer();
+}
+
+/* ---------- Settings ---------- */
+function renderSettings() {
+  const meta = StateManager.get('meta');
+  const settings = StateManager.get('settings') || {};
+  const usagePercent = StorageManager.estimateUsagePercent();
+
+  const node = el('div', {}, [
+    el('h1', { style: 'font-size:22px; font-weight:600; margin:0 0 14px' }, 'Settings'),
+
+    el('div', { class: 'card', style: 'margin-bottom:14px' }, [
+      el('div', { class: 'card-title' }, 'Profile'),
+      el('label', { style: 'display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px' }, 'Current level'),
+      el('select', {
+        style: 'margin-bottom:12px; width:100%',
+        onchange: (e) => StateManager.update('meta.currentLevel', e.target.value)
+      }, ['SDE1', 'SDE2', 'SDE3', 'Staff'].map(l => el('option', { value: l, ...(l === meta.currentLevel ? { selected: 'selected' } : {}) }, l))),
+
+      el('label', { style: 'display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px' }, 'Target interview date'),
+      el('input', {
+        type: 'date', style: 'margin-bottom:12px; width:100%', value: meta.targetDate ? meta.targetDate.slice(0, 10) : '',
+        onchange: (e) => StateManager.update('meta.targetDate', new Date(e.target.value).toISOString())
+      }),
+
+      el('label', { style: 'display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px' }, 'Target companies'),
+      el('div', { style: 'display:flex; gap:6px; flex-wrap:wrap' }, COMPANY_LIST.map(c => {
+        const active = (meta.targetCompanies || []).includes(c);
+        return el('button', {
+          class: 'btn btn-sm' + (active ? ' btn-primary' : ''),
+          onclick: () => {
+            const current = meta.targetCompanies || [];
+            const updated = active ? current.filter(x => x !== c) : [...current, c];
+            StateManager.update('meta.targetCompanies', updated);
+            renderSettings();
+          }
+        }, COMPANIES_DB[c].name);
+      }))
+    ]),
+
+    el('div', { class: 'card', style: 'margin-bottom:14px' }, [
+      el('div', { class: 'card-title' }, 'Appearance'),
+      el('div', { style: 'display:flex; gap:8px' }, ['light', 'dark', 'system'].map(t =>
+        el('button', { class: 'btn btn-sm' + (ThemeManager.current() === t ? ' btn-primary' : ''), onclick: () => { ThemeManager.apply(t); renderSettings(); } }, t)
+      ))
+    ]),
+
+    el('div', { class: 'card', style: 'margin-bottom:14px' }, [
+      el('div', { class: 'card-title' }, 'Daily Goal'),
+      el('input', {
+        type: 'number', min: '10', max: '300', value: settings.dailyGoalMinutes || 60, style: 'width:120px',
+        onchange: (e) => StateManager.update('settings.dailyGoalMinutes', parseInt(e.target.value, 10))
+      }),
+      el('span', { style: 'margin-left:8px; font-size:12px; color:var(--text-secondary)' }, 'minutes per day')
+    ]),
+
+    el('div', { class: 'card', style: 'margin-bottom:14px' }, [
+      el('div', { class: 'card-title' }, 'Storage'),
+      el('div', { style: 'height:8px; background:var(--bg-sunken); border-radius:4px; overflow:hidden; margin-bottom:6px' }, [
+        el('div', { style: `height:100%; width:${usagePercent}%; background:${usagePercent > 80 ? 'var(--danger)' : 'var(--accent)'}` })
+      ]),
+      el('div', { style: 'font-size:12px; color:var(--text-secondary)' }, `${usagePercent}% of safe storage limit used`)
+    ]),
+
+    el('div', { class: 'card', style: 'margin-bottom:14px' }, [
+      el('div', { class: 'card-title' }, 'Backup'),
+      el('div', { style: 'display:flex; gap:8px' }, [
+        el('button', { class: 'btn btn-sm btn-primary', onclick: exportData }, 'Export JSON'),
+        el('label', { class: 'btn btn-sm', style: 'cursor:pointer' }, ['Import JSON',
+          el('input', { type: 'file', accept: '.json', style: 'display:none', onchange: importData })
+        ])
+      ])
+    ]),
+
+    el('div', { class: 'card' }, [
+      el('div', { class: 'card-title', style: 'color:var(--danger)' }, 'Danger Zone'),
+      el('button', { class: 'btn btn-danger btn-sm', onclick: () => { if (confirm('This will permanently delete all your data. Continue?')) { StateManager.resetAll(); Router.navigate('dashboard'); } } }, 'Reset all data')
+    ])
+  ]);
+
+  mount(node);
+}
+
+function exportData() {
+  const data = JSON.stringify(StateManager.state, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `se-cos-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  StateManager.update('settings.lastBackupAt', new Date().toISOString());
+  Toast.show('Backup exported', 'success');
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const imported = JSON.parse(reader.result);
+      StateManager.state = SchemaMigrator.migrate(imported);
+      StateManager.persist();
+      Toast.show('Data imported successfully', 'success');
+      Router.navigate('dashboard');
+    } catch (err) {
+      Toast.show('Invalid backup file', 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+
+/* ===== storage.js ===== */
+/* ============================================================
+   SE-COS — storage.js
+   SR Engine (SM-2 style) + Search Engine + Command Palette +
+   Streak / Gamification Engine
+   ============================================================ */
+
+/* ---------- Spaced Repetition Engine ---------- */
+const SRSEngine = {
+  // Simplified interval schedule (days): 1 -> 3 -> 7 -> 14 -> 30 -> 30 (cap)
+  SCHEDULE: [1, 3, 7, 14, 30],
+
+  nextInterval(currentIntervalDays, rating) {
+    // rating: 'easy' | 'medium' | 'hard' — hard resets, easy/medium progress schedule
+    if (rating === 'hard') return this.SCHEDULE[0];
+    const idx = this.SCHEDULE.indexOf(currentIntervalDays);
+    if (idx === -1) return this.SCHEDULE[0];
+    return this.SCHEDULE[Math.min(idx + 1, this.SCHEDULE.length - 1)];
+  },
+
+  addDays(isoDate, days) {
+    const d = new Date(isoDate);
+    d.setDate(d.getDate() + days);
+    return d.toISOString();
+  },
+
+  getDueToday(problems) {
+    const now = Date.now();
+    return problems.filter(p => p.nextReview && new Date(p.nextReview).getTime() <= now);
+  },
+
+  rateReview(problemId, rating) {
+    const existing = StateManager.get(`problems.${problemId}`) || {};
+    const interval = this.nextInterval(existing.reviewInterval || 0, rating);
+    const now = new Date().toISOString();
+    StateManager.update(`problems.${problemId}`, {
+      ...existing,
+      reviewInterval: interval,
+      nextReview: this.addDays(now, interval),
+      status: rating === 'hard' ? 'review' : 'solved'
+    });
+  }
+};
+
+/* ---------- Search Engine ---------- */
+const SearchEngine = {
+  buildIndex() {
+    const index = [];
+    Object.values(RESOURCES_DB).forEach(r => index.push({ type: 'Resource', id: r.id, label: r.title, route: 'resources' }));
+    Object.values(COMPANIES_DB).forEach(c => index.push({ type: 'Company', id: c.id, label: c.name, route: 'companies' }));
+    SYSTEM_DESIGN_TOPICS.forEach(t => index.push({ type: 'System Design', id: t.id, label: t.name, route: 'system-design' }));
+    PROBLEM_SEEDS.forEach(p => index.push({ type: 'Problem', id: p.id, label: p.name, route: 'problems' }));
+    ['dashboard', 'problems', 'resources', 'companies', 'system-design', 'behavioral', 'roadmap', 'analytics', 'mock', 'settings'].forEach(v =>
+      index.push({ type: 'View', id: v, label: v.replace('-', ' '), route: v })
+    );
+    return index;
+  },
+
+  search(query, index) {
+    if (!query) return [];
+    const q = query.toLowerCase();
+    return index
+      .map(item => {
+        const label = item.label.toLowerCase();
+        let rank = -1;
+        if (label === q) rank = 0;
+        else if (label.startsWith(q)) rank = 1;
+        else if (label.includes(q)) rank = 2;
+        return { ...item, rank };
+      })
+      .filter(item => item.rank >= 0)
+      .sort((a, b) => a.rank - b.rank)
+      .slice(0, 8);
+  }
+};
+
+/* ---------- Command Palette ---------- */
+const CommandPalette = {
+  index: null,
+  selectedIdx: 0,
+  results: [],
+
+  toggle() {
+    const overlay = document.getElementById('palette-overlay');
+    if (!overlay) return;
+    overlay.classList.contains('open') ? this.close() : this.open();
+  },
+
+  open() {
+    if (!this.index) this.index = SearchEngine.buildIndex();
+    const overlay = document.getElementById('palette-overlay');
+    overlay.classList.add('open');
+    const input = document.getElementById('palette-input');
+    input.value = '';
+    this.results = [];
+    this.renderResults();
+    setTimeout(() => input.focus(), 30);
+  },
+
+  close() {
+    const overlay = document.getElementById('palette-overlay');
+    if (overlay) overlay.classList.remove('open');
+  },
+
+  onInput(value) {
+    this.results = SearchEngine.search(value, this.index);
+    this.selectedIdx = 0;
+    this.renderResults();
+  },
+
+  renderResults() {
+    const container = document.getElementById('palette-results');
+    if (!container) return;
+    container.innerHTML = '';
+    this.results.forEach((r, i) => {
+      const item = el('div', {
+        class: 'palette-item' + (i === this.selectedIdx ? ' selected' : ''),
+        onclick: () => this.select(r)
+      }, [
+        el('span', {}, r.label),
+        el('span', { class: 'badge badge-muted' }, r.type)
+      ]);
+      container.appendChild(item);
+    });
+  },
+
+  select(item) {
+    this.close();
+    Router.navigate(item.route);
+  },
+
+  moveSelection(delta) {
+    if (this.results.length === 0) return;
+    this.selectedIdx = (this.selectedIdx + delta + this.results.length) % this.results.length;
+    this.renderResults();
+  },
+
+  selectCurrent() {
+    if (this.results[this.selectedIdx]) this.select(this.results[this.selectedIdx]);
+  }
+};
+
+/* ---------- Streak / Gamification Engine ---------- */
+const StreakEngine = {
+  todayKey() {
+    return new Date().toISOString().slice(0, 10);
+  },
+
+  logActivity() {
+    const streak = StateManager.get('streak') || { current: 0, longest: 0, lastActiveDate: null, history: {} };
+    const today = this.todayKey();
+    const history = { ...streak.history, [today]: (streak.history[today] || 0) + 1 };
+
+    let current = streak.current;
+    if (streak.lastActiveDate !== today) {
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      current = (streak.lastActiveDate === yesterday) ? streak.current + 1 : 1;
+    }
+    const longest = Math.max(streak.longest, current);
+
+    StateManager.update('streak', { current, longest, lastActiveDate: today, history });
+    this.checkMilestones(current);
+  },
+
+  checkOnLoad() {
+    const streak = StateManager.get('streak');
+    if (!streak || !streak.lastActiveDate) return;
+    const today = this.todayKey();
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    if (streak.lastActiveDate !== today && streak.lastActiveDate !== yesterday) {
+      // Streak broken
+      StateManager.update('streak.current', 0);
+    }
+  },
+
+  checkMilestones(current) {
+    const milestones = [7, 30, 50, 100, 180, 365];
+    if (milestones.includes(current)) {
+      Toast.show(`${current}-day streak! Keep going.`, 'success', 4000);
+    }
+  }
+};
+
+</script>
+<script>
+  /* ---------- Route Registration ---------- */
+  Router.register('dashboard', renderDashboard);
+  Router.register('problems', renderProblems);
+  Router.register('resources', renderResources);
+  Router.register('companies', renderCompanies);
+  Router.register('system-design', renderSystemDesign);
+  Router.register('behavioral', renderBehavioral);
+  Router.register('roadmap', renderRoadmap);
+  Router.register('analytics', renderAnalytics);
+  Router.register('mock', renderMock);
+  Router.register('settings', renderSettings);
+
+  /* ---------- Nav active-state sync ---------- */
+  function updateSRBadge() {
+    const due = SRSEngine.getDueToday(getAllProblems()).length;
+    document.querySelectorAll('.bottom-tab[data-nav="problems"]').forEach(t => {
+      let badge = t.querySelector('.tab-badge');
+      if (due > 0) {
+        if (!badge) { badge = document.createElement('span'); badge.className = 'tab-badge'; t.appendChild(badge); }
+      } else if (badge) {
+        badge.remove();
+      }
+    });
+    const sidebarBadge = document.getElementById('sidebar-sr-badge');
+    if (sidebarBadge) {
+      if (due > 0) { sidebarBadge.textContent = String(due); sidebarBadge.style.display = ''; }
+      else { sidebarBadge.style.display = 'none'; }
+    }
+  }
+
+  EventBus.on('router:navigate', (routeId) => {
+    document.querySelectorAll('[data-nav]').forEach(el => {
+      const isActive = el.getAttribute('data-nav') === routeId;
+      el.classList.toggle('active', isActive);
+      if (isActive) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
+    });
+    CompaniesViewState.selected = null;
+    updateSRBadge();
+  });
+  EventBus.on('state:changed', updateSRBadge);
+  EventBus.on('app:ready', updateSRBadge);
+
+  /* ---------- Onboarding ---------- */
+  EventBus.on('app:needsOnboarding', () => {
+    const overlay = document.getElementById('onboarding-overlay');
+    overlay.style.display = 'flex';
+
+    const companiesContainer = document.getElementById('ob-companies');
+    const selected = new Set();
+    COMPANY_LIST.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-sm';
+      btn.textContent = COMPANIES_DB[c].name;
+      btn.onclick = () => {
+        if (selected.has(c)) { selected.delete(c); btn.classList.remove('btn-primary'); }
+        else { selected.add(c); btn.classList.add('btn-primary'); }
+      };
+      companiesContainer.appendChild(btn);
+    });
+
+    document.getElementById('ob-submit').onclick = () => {
+      const level = document.getElementById('ob-level').value;
+      const dateVal = document.getElementById('ob-date').value;
+      const targetDate = dateVal ? new Date(dateVal).toISOString() : null;
+      StateManager.completeOnboarding({
+        targetCompanies: Array.from(selected),
+        currentLevel: level,
+        targetDate
+      });
+      overlay.style.display = 'none';
+      Router.navigate('dashboard');
+      Toast.show('Roadmap generated. Welcome aboard.', 'success');
+    };
+  });
+</script>
+</body>
+</html>
